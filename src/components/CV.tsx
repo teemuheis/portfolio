@@ -5,7 +5,7 @@ const experience = [
     company: 'Supermetrics',
     period: '2023 – Present',
     highlights: [
-      'Leads discovery phase — translating ambiguous business requirements into integration architecture and technical roadmaps before development begins',
+      'Supports discovery phase — translating ambiguous business requirements into integration architecture and technical roadmaps before development begins',
       'Designed and shipped two production platforms: a connector feasibility pipeline (cut a 1–2 day manual process to hours) and a four-agent bug investigation pipeline',
       'Owns architectural decisions across two teams — aligning internal stakeholders, managing technical standards, and ensuring cross-functional delivery stays unblocked',
       'Upskilling engineers through mentoring and code reviews; running beta validation sessions against real user workflows before full rollout',
