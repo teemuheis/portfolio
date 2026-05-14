@@ -1,31 +1,62 @@
 const experience = [
   {
-    title: 'Solutions Engineer',
-    company: 'Vero Solutions',
+    title: 'Tech Lead',
+    subtitle: 'Senior API Integration Engineer',
+    company: 'Supermetrics',
     period: '2023 – Present',
     highlights: [
-      'Built API integrations connecting CRMs, ERPs and automation platforms for enterprise clients',
-      'Designed and deployed n8n workflow automation reducing manual ops work by 60%',
-      'Led technical onboarding and solution scoping for SaaS implementations',
+      'Leads discovery phase — translating ambiguous business requirements into integration architecture and technical roadmaps before development begins',
+      'Designed and shipped two production platforms: a connector feasibility pipeline (cut a 1–2 day manual process to hours) and a four-agent bug investigation pipeline',
+      'Owns architectural decisions across two teams — aligning internal stakeholders, managing technical standards, and ensuring cross-functional delivery stays unblocked',
+      'Upskilling engineers through mentoring and code reviews; running beta validation sessions against real user workflows before full rollout',
     ],
   },
   {
-    title: 'Technical Support Lead',
-    company: 'Vero Solutions',
-    period: '2021 – 2023',
+    title: 'Connector Specialist',
+    company: 'Supermetrics',
+    period: '2022 – 2023',
     highlights: [
-      'Owned integration troubleshooting across REST APIs, webhooks and OAuth flows',
-      'Built internal tooling (Python, Make.com) to automate ticket triage and reporting',
+      'Implementing connectors and features to specification; bug fixes, security improvements, and PR reviews',
+    ],
+  },
+  {
+    title: 'Lead Technical Support Specialist',
+    company: 'Supermetrics',
+    period: '2019 – 2022',
+    highlights: [
+      'Debugging BigQuery and Snowflake integrations at enterprise scale; bridging customer success and R&D to resolve critical data pipeline issues',
+      'Single point of contact for the most complex integration failures — diagnosing root cause across the full stack and coordinating fix delivery',
+    ],
+  },
+  {
+    title: 'Hardware Integrations & Tech Support',
+    company: 'Virta',
+    period: '2017 – 2019',
+    highlights: [
+      'Technical point of contact for energy companies, retailers, and parking operators on EV charging infrastructure — from requirements through go-live',
+      'Testing and integrating EV charging hardware using OCPP; protocol-level debugging between hardware and cloud platform in a production environment',
+    ],
+  },
+  {
+    title: 'Project Specialist',
+    company: 'Saimaa UAS',
+    period: '2015 – 2017',
+    highlights: [
+      'Led commercialisation of electric motor innovations and conducted technical market research',
     ],
   },
 ]
 
 const skills: Record<string, string[]> = {
-  'APIs & Integrations': ['REST', 'OAuth 2.0', 'Webhooks', 'Bruno', 'Postman'],
-  'Automation': ['n8n', 'Make.com', 'Python scripting', 'cron / systemd'],
-  'AI Tooling': ['Claude Code', 'OpenAI API', 'Anthropic SDK', 'Prompt engineering'],
-  'Frontend': ['TypeScript', 'React', 'Next.js', 'Tailwind CSS'],
-  'Infrastructure': ['Docker', 'AWS (EC2, S3)', 'Nginx', 'Linux'],
+  'Solution Ownership': ['Solution Discovery', 'Technical roadmaps', 'Stakeholder coordination', 'Vendor management', 'Project delivery'],
+  'Integration & Architecture': ['API integration', 'System architecture', 'REST APIs', 'Google Cloud / BigQuery', 'Snowflake'],
+  'Leadership & Delivery': ['Team leadership', 'Cross-functional delivery', 'Mentoring', 'User adoption', 'KPI & reporting'],
+}
+
+const education = {
+  institution: 'LUT University, Lappeenranta',
+  degree: 'Bachelor of Science, Industrial Management',
+  period: '2010 – 2014',
 }
 
 export default function CV() {
@@ -41,12 +72,15 @@ export default function CV() {
           {/* Timeline */}
           <div className="relative pl-6 border-l border-orange-500/20 space-y-10">
             {experience.map((role) => (
-              <div key={role.title} className="relative">
+              <div key={`${role.title}-${role.period}`} className="relative">
                 <div className="absolute -left-[25px] top-1 h-3 w-3 rounded-full bg-orange-500 ring-4 ring-[#050505]" />
                 <p className="text-xs text-white/40 mb-1">{role.period}</p>
                 <h4 className="text-xl font-semibold">{role.title}</h4>
-                <p className="text-orange-300/80 text-sm mb-3">{role.company}</p>
-                <ul className="space-y-1.5">
+                <p className="text-orange-300/80 text-sm mb-1">{role.company}</p>
+                {'subtitle' in role && (
+                  <p className="text-white/30 text-xs italic mb-2">{role.subtitle}</p>
+                )}
+                <ul className="space-y-1.5 mt-2">
                   {role.highlights.map((h) => (
                     <li key={h} className="text-white/55 text-sm leading-relaxed flex gap-2">
                       <span className="text-orange-500/60 shrink-0 mt-1">—</span>
@@ -56,6 +90,14 @@ export default function CV() {
                 </ul>
               </div>
             ))}
+
+            {/* Education */}
+            <div className="relative">
+              <div className="absolute -left-[25px] top-1 h-3 w-3 rounded-full bg-white/20 ring-4 ring-[#050505]" />
+              <p className="text-xs text-white/40 mb-1">{education.period}</p>
+              <h4 className="text-base font-semibold">{education.degree}</h4>
+              <p className="text-white/40 text-sm">{education.institution}</p>
+            </div>
           </div>
 
           {/* Skills grid */}
