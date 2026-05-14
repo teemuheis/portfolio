@@ -15,7 +15,7 @@
   --color-orange-500: #f97316;
   --animate-draw-line: drawLine 1.4s ease-out forwards;
   --animate-pulse-slow: pulse 3s ease-in-out infinite;
-  --animate-progress-bar: progressBar 10s linear forwards;
+  --animate-progress-bar: progressBar 8s linear forwards;
 }
 
 @keyframes drawLine {

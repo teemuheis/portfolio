@@ -206,7 +206,7 @@ export default function StravaMap({ activities }: Props) {
   // Effect 5: cycle through activities
   useEffect(() => {
     if (activities.length <= 1) return
-    const periodMs = 10_000 / controls.speedMultiplier
+    const periodMs = 8_000
     const interval = setInterval(() => {
       setActiveIndex((i) => (i + 1) % activities.length)
     }, periodMs)
