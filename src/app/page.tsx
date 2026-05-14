@@ -13,10 +13,7 @@ export default async function Home() {
         <div className="rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl px-5 py-4">
           <p className="text-[10px] text-white/30 tracking-[0.18em] uppercase mb-1">Portfolio</p>
           <p className="text-lg font-bold text-white leading-tight">Teemu Heiskanen</p>
-          <p className="text-sm text-orange-400/90 mb-3">Integration Engineer</p>
-          <p className="text-[10px] text-white/25 italic mb-3 max-w-[180px] leading-relaxed">
-            Site under construction — enjoy my Strava data in the meantime
-          </p>
+          <p className="text-sm text-orange-400/90 mb-6">Integration Engineer</p>
           <div className="flex flex-col gap-1.5">
             <a
               href="mailto:teemu.heiskanen@gmail.com"
