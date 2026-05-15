@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 
 type SpotifyMoodLoaderProps = {
   authenticated: boolean
+  userAuthenticated: boolean
 }
 
 const SpotifyMoodApp = dynamic(() => import('./SpotifyMoodApp').then(m => ({ default: m.SpotifyMoodApp })), {
@@ -15,6 +16,6 @@ const SpotifyMoodApp = dynamic(() => import('./SpotifyMoodApp').then(m => ({ def
   ),
 })
 
-export function SpotifyMoodLoader({ authenticated }: SpotifyMoodLoaderProps) {
-  return <SpotifyMoodApp authenticated={authenticated} />
+export function SpotifyMoodLoader({ authenticated, userAuthenticated }: SpotifyMoodLoaderProps) {
+  return <SpotifyMoodApp authenticated={authenticated} userAuthenticated={userAuthenticated} />
 }

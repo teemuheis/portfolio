@@ -43,9 +43,9 @@ function weatherMood({ energy, valence }: WeatherModifier): WeatherMood {
   return { icon: '◐', label: 'neutral drift', tone: '#a7f3d0' }
 }
 
-type SpotifyMoodAppProps = { authenticated: boolean }
+type SpotifyMoodAppProps = { authenticated: boolean; userAuthenticated: boolean }
 
-export function SpotifyMoodApp({ authenticated }: SpotifyMoodAppProps) {
+export function SpotifyMoodApp({ authenticated, userAuthenticated }: SpotifyMoodAppProps) {
   const [mood, setMood] = useState<string>('chill')
   const [general, setGeneral] = useState<Track[]>([])
   const [personal, setPersonal] = useState<Track[]>([])
@@ -209,7 +209,7 @@ export function SpotifyMoodApp({ authenticated }: SpotifyMoodAppProps) {
               </section>
             )}
 
-            {personal.length > 0 && (
+            {personal.length > 0 ? (
               <section>
                 <h2
                   className="text-xs font-semibold uppercase tracking-[0.2em] mb-4 px-1 flex items-center gap-3"
@@ -232,7 +232,25 @@ export function SpotifyMoodApp({ authenticated }: SpotifyMoodAppProps) {
                   ))}
                 </div>
               </section>
-            )}
+            ) : !userAuthenticated ? (
+              <section className="flex flex-col justify-center items-center text-center h-full min-h-[200px]">
+                <p className="text-white/30 text-sm mb-5 leading-relaxed">
+                  Connect your Spotify to mix in<br />your own top tracks
+                </p>
+                <motion.a
+                  href="/api/spotify/auth"
+                  whileHover={{ scale: 1.04, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="inline-block px-6 py-2.5 rounded-full text-white font-semibold text-xs"
+                  style={{
+                    background: 'linear-gradient(135deg, #7c3aed, #0ea5e9)',
+                    boxShadow: '0 0 24px rgba(124,58,237,0.35)',
+                  }}
+                >
+                  Connect Spotify
+                </motion.a>
+              </section>
+            ) : null}
           </div>
         )}
       </div>
