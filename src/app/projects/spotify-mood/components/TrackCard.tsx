@@ -50,10 +50,12 @@ export function TrackCard({
   const [currentTime, setCurrentTime] = useState(0)
   const [resolvedPreviewUrl, setResolvedPreviewUrl] = useState<string | null>(track.preview_url)
   const [isFetchingPreview, setIsFetchingPreview] = useState(false)
+  const [previewUnavailable, setPreviewUnavailable] = useState(false)
 
   // Reset when the track prop changes
   useEffect(() => {
     setResolvedPreviewUrl(track.preview_url)
+    setPreviewUnavailable(false)
     setDuration(0)
     setCurrentTime(0)
   }, [track.id, track.preview_url])
@@ -95,6 +97,7 @@ export function TrackCard({
       setIsFetchingPreview(true)
       url = await fetchItunesPreview(track)
       setResolvedPreviewUrl(url)
+      setPreviewUnavailable(url === null)
       setIsFetchingPreview(false)
     }
 
@@ -117,21 +120,25 @@ export function TrackCard({
         background: isPlaying ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.04)',
         border: isPlaying ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.07)',
         backdropFilter: 'blur(12px)',
-        cursor: 'pointer',
+        cursor: previewUnavailable ? 'default' : 'pointer',
       }}
       className="rounded-2xl p-4 flex items-center gap-4 transition-all select-none"
     >
       {/* Play/pause/loading indicator */}
       <motion.div
-        whileHover={{ scale: 1.15 }}
-        whileTap={{ scale: 0.9 }}
+        whileHover={previewUnavailable ? {} : { scale: 1.15 }}
+        whileTap={previewUnavailable ? {} : { scale: 0.9 }}
         className="flex-shrink-0"
-        style={{ color: 'rgba(255,255,255,0.9)' }}
+        style={{ color: previewUnavailable ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.9)' }}
       >
         {isFetchingPreview ? (
           <svg className="w-7 h-7 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+          </svg>
+        ) : previewUnavailable ? (
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
           </svg>
         ) : isPlaying ? (
           <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
