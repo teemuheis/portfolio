@@ -12,10 +12,10 @@ export default function FoodBankPage() {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white border-b border-gray-100 px-6 py-3 flex items-center gap-3">
         <Link
-          href="/"
+          href="/projects"
           className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
         >
-          ← Portfolio
+          ← Projects
         </Link>
         <span className="text-gray-200">/</span>
         <span className="text-sm text-gray-600 font-medium">Food Bank Calculator</span>

@@ -1,4 +1,10 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+  title: 'Projects — Teemu Heiskanen',
+  description: 'Portfolio projects and live demos.',
+}
 
 interface Project {
   title: string
@@ -10,6 +16,14 @@ interface Project {
 }
 
 const PROJECTS: Project[] = [
+  {
+    title: 'Food Bank Nutrition Calculator',
+    desc: 'Web app for bulk recipe macro calculation using a 23k+ food database (Fineli + Open Food Facts) with Finnish recipe parsing and vector search.',
+    href: '/projects/food-bank',
+    external: false,
+    label: 'Live demo →',
+    tags: ['React', 'Python', 'SQLite', 'Vector search'],
+  },
   {
     title: 'Config Driven Request Builder',
     desc: 'CLI parser that extracts deeply nested API request definitions and transforms them into Bruno collections — reducing manual collection setup from hours to seconds.',
@@ -27,30 +41,32 @@ const PROJECTS: Project[] = [
     tags: ['n8n', 'OpenAI', 'Telegram', 'SQLite'],
   },
   {
-    title: 'Food Bank Nutrition Calculator',
-    desc: 'Web app for bulk recipe macro calculation using a 23k+ food database (Fineli + Open Food Facts) with Finnish recipe parsing and vector search.',
-    href: '/projects/food-bank',
-    external: false,
-    label: 'Live demo →',
-    tags: ['React', 'Python', 'SQLite', 'Vector search'],
-  },
-  {
     title: 'Portfolio Landing Page',
     desc: 'This site — built with Next.js, Leaflet, and Framer Motion. Pulls live Strava data server-side; secrets never touch the browser.',
-    href: '/projects',
-    external: false,
-    label: 'All projects →',
+    href: 'https://github.com/teemuheis/portfolio',
+    external: true,
+    label: 'GitHub →',
     tags: ['Next.js', 'TypeScript', 'Leaflet', 'Strava API'],
   },
 ]
 
-export default function Projects() {
+export default function ProjectsPage() {
+  const cardClass = "group rounded-[28px] border border-white/10 bg-gradient-to-b from-white/[0.05] to-transparent p-8 hover:border-orange-500/20 hover:shadow-[0_0_30px_rgba(255,140,0,0.06)] transition-all block"
+
   return (
-    <section id="projects" className="relative z-10 px-6 md:px-10 py-16 border-t border-white/5">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-[#0b0b0b] text-white">
+      <nav className="px-6 py-5 flex items-center gap-3 border-b border-white/5">
+        <Link href="/" className="text-sm text-white/40 hover:text-white/80 transition-colors">
+          ← Home
+        </Link>
+        <span className="text-white/20">/</span>
+        <span className="text-sm text-white/70 font-medium">Projects</span>
+      </nav>
+
+      <main className="max-w-6xl mx-auto px-6 py-16">
         <div className="mb-12">
           <p className="text-orange-300 uppercase tracking-[0.25em] text-sm mb-4">Featured Work</p>
-          <h3 className="text-4xl font-bold">Projects &amp; Experiments</h3>
+          <h1 className="text-4xl font-bold">Projects &amp; Experiments</h1>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
@@ -63,7 +79,7 @@ export default function Projects() {
                     {project.label}
                   </span>
                 </div>
-                <h4 className="text-xl font-semibold mb-3">{project.title}</h4>
+                <h2 className="text-xl font-semibold mb-3">{project.title}</h2>
                 <p className="text-white/55 leading-relaxed text-sm mb-5">{project.desc}</p>
                 <div className="flex flex-wrap gap-2">
                   {project.tags.map((tag) => (
@@ -75,26 +91,18 @@ export default function Projects() {
               </>
             )
 
-            const className = "group rounded-[28px] border border-white/10 bg-gradient-to-b from-white/[0.05] to-transparent p-8 hover:border-orange-500/20 hover:shadow-[0_0_30px_rgba(255,140,0,0.06)] transition-all block"
-
             return project.external ? (
-              <a
-                key={project.title}
-                href={project.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={className}
-              >
+              <a key={project.title} href={project.href} target="_blank" rel="noopener noreferrer" className={cardClass}>
                 {inner}
               </a>
             ) : (
-              <Link key={project.title} href={project.href} className={className}>
+              <Link key={project.title} href={project.href} className={cardClass}>
                 {inner}
               </Link>
             )
           })}
         </div>
-      </div>
-    </section>
+      </main>
+    </div>
   )
 }
