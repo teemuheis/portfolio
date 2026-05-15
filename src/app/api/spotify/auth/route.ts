@@ -10,17 +10,12 @@ function generateRandomString(length: number): string {
   return result
 }
 
-async function sha256(input: string): Promise<string> {
+async function generateCodeChallenge(codeVerifier: string): Promise<string> {
   const encoder = new TextEncoder()
-  const data = encoder.encode(input)
+  const data = encoder.encode(codeVerifier)
   const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
-  return hashHex
-}
-
-function base64url(input: string): string {
-  return Buffer.from(input, 'binary')
+  // Encode the raw bytes directly — NOT a hex string
+  return Buffer.from(hashBuffer)
     .toString('base64')
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
@@ -29,18 +24,12 @@ function base64url(input: string): string {
 
 export async function GET() {
   const codeVerifier = generateRandomString(128)
-  const codeChallengeSha = await sha256(codeVerifier)
-  const codeChallenge = base64url(codeChallengeSha)
+  const codeChallenge = await generateCodeChallenge(codeVerifier)
   const state = generateRandomString(16)
 
-  // Encode code_verifier in the state param to pass it back through Spotify's redirect
-  // state format: "state_value:code_verifier_encoded"
-  // Use standard base64 (URL-safe encoding may cause issues with decoding)
-  const encodedVerifier = Buffer.from(codeVerifier).toString('base64')
-  const stateWithVerifier = `${state}:${encodedVerifier}`
+  // Embed code_verifier in state so it survives the cross-site redirect from Spotify
+  const stateWithVerifier = `${state}:${Buffer.from(codeVerifier).toString('base64')}`
 
   const authUrl = buildAuthUrl(stateWithVerifier, codeChallenge)
-  const response = NextResponse.redirect(authUrl)
-
-  return response
+  return NextResponse.redirect(authUrl)
 }
