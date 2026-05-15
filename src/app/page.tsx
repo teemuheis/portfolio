@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import MapView from '@/components/MapView'
 import { getStravaActivities } from '@/lib/strava'
 
@@ -29,6 +30,12 @@ export default async function Home() {
             >
               linkedin.com/in/teemu-heiskanen
             </a>
+            <Link
+              href="/projects"
+              className="pointer-events-auto text-[11px] text-orange-400/70 hover:text-orange-300 transition-colors tracking-wide mt-1"
+            >
+              Projects →
+            </Link>
           </div>
         </div>
       </div>
