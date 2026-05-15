@@ -1,4 +1,5 @@
 'use client'
+import { useState, useEffect } from 'react'
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import type { MacroTotals } from '../lib/types'
 
@@ -31,10 +32,15 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
 }
 
 export function MacroChart({ totals }: Props) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
   const { protein_g, carbs_g, fat_g } = totals
   const total = protein_g + carbs_g + fat_g
 
   if (total === 0) return null
+  // Wait for stable DOM before letting ResponsiveContainer measure its container
+  if (!mounted) return <div style={{ height: 240 }} />
 
   const data = [
     { name: 'Protein', value: protein_g, kcal: protein_g * 4 },

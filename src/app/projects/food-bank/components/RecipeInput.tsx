@@ -62,7 +62,7 @@ export function RecipeInput({ onCalculate, loading, prefill }: Props) {
               placeholder="Ingredient (e.g. kananmuna, chicken breast)"
               value={row.name}
               onChange={(e) => updateRow(i, 'name', e.target.value)}
-              className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
             <div className="relative">
               <input
@@ -72,7 +72,7 @@ export function RecipeInput({ onCalculate, loading, prefill }: Props) {
                 step="any"
                 value={row.amount_g}
                 onChange={(e) => updateRow(i, 'amount_g', e.target.value)}
-                className="w-24 rounded-lg border border-gray-200 px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-24 rounded-lg border border-gray-200 px-3 py-2 pr-8 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">g</span>
             </div>
@@ -104,7 +104,7 @@ export function RecipeInput({ onCalculate, loading, prefill }: Props) {
           min="1"
           value={servings}
           onChange={(e) => setServings(e.target.value)}
-          className="w-16 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="w-16 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-400"
         />
       </div>
 
