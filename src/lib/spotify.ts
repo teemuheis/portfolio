@@ -223,7 +223,14 @@ export async function exchangeAuthCode(
   })
 
   if (!response.ok) {
-    throw new Error(`Auth exchange failed: ${response.statusText}`)
+    const errorData = await response.text()
+    console.error('Spotify token exchange error:', {
+      status: response.status,
+      statusText: response.statusText,
+      body: errorData,
+      callbackUrl,
+    })
+    throw new Error(`Auth exchange failed: ${response.statusText} - ${errorData}`)
   }
 
   return response.json() as Promise<{
