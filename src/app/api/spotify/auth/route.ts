@@ -37,16 +37,15 @@ export async function GET() {
   const authUrl = buildAuthUrl(state, codeChallenge)
   const response = NextResponse.redirect(authUrl)
 
-  // Set cookies to store verifier and state for callback route
-  const cookieStore = await cookies()
-  cookieStore.set('spotify_code_verifier', codeVerifier, {
+  // Set cookies on response to store verifier and state for callback route
+  response.cookies.set('spotify_code_verifier', codeVerifier, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 600, // 10 minutes
   })
 
-  cookieStore.set('spotify_auth_state', state, {
+  response.cookies.set('spotify_auth_state', state, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
