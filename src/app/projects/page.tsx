@@ -17,6 +17,14 @@ interface Project {
 
 const PROJECTS: Project[] = [
   {
+    title: 'Spotify Mood Randomizer',
+    desc: 'Discover songs based on your mood, current weather, and listening history. Animated blob background with preview playback and Spotify integration.',
+    href: '/projects/spotify-mood',
+    external: false,
+    label: 'Try it →',
+    tags: ['Next.js', 'Spotify API', 'Framer Motion', 'Open-Meteo'],
+  },
+  {
     title: 'Food Bank Nutrition Calculator',
     desc: 'Web app for bulk recipe macro calculation using a 23k+ food database (Fineli + Open Food Facts) with Finnish recipe parsing and vector search.',
     href: '/projects/food-bank',
