@@ -8,33 +8,39 @@ type MoodSelectorProps = {
   onMoodChange: (mood: string) => void
   onRandomize: () => void
   isLoading?: boolean
+  disabled?: boolean
+}
+
+const MOOD_LABELS: Record<string, string> = {
+  ignite:   'Ignite',
+  drift:    'Drift',
+  flow:     'Flow State',
+  golden:   'Golden Hour',
+  electric: 'Electric',
 }
 
 const MOOD_EMOJIS: Record<string, string> = {
-  energetic: '⚡',
-  chill: '❄️',
-  focus: '🎯',
-  happy: '😊',
-  melancholy: '🌙',
-  party: '🎉',
+  ignite:   '⚡',
+  drift:    '🌊',
+  flow:     '🎯',
+  golden:   '☀️',
+  electric: '🎉',
 }
 
 const MOOD_GRADIENTS: Record<string, [string, string]> = {
-  energetic: ['#ff3b3b', '#ff7a00'],
-  chill:     ['#7c3aed', '#0ea5e9'],
-  focus:     ['#059669', '#14b8a6'],
-  happy:     ['#f59e0b', '#f97316'],
-  melancholy:['#6d28d9', '#be185d'],
-  party:     ['#ec4899', '#8b5cf6'],
+  ignite:   ['#ff3b3b', '#ff7a00'],
+  drift:    ['#7c3aed', '#0ea5e9'],
+  flow:     ['#059669', '#14b8a6'],
+  golden:   ['#f59e0b', '#f97316'],
+  electric: ['#ec4899', '#8b5cf6'],
 }
 
 const MOOD_GLOWS: Record<string, string> = {
-  energetic: '0 0 28px rgba(255,59,59,0.55)',
-  chill:     '0 0 28px rgba(124,58,237,0.55)',
-  focus:     '0 0 28px rgba(5,150,105,0.55)',
-  happy:     '0 0 28px rgba(245,158,11,0.55)',
-  melancholy:'0 0 28px rgba(109,40,217,0.55)',
-  party:     '0 0 28px rgba(236,72,153,0.55)',
+  ignite:   '0 0 28px rgba(255,59,59,0.55)',
+  drift:    '0 0 28px rgba(124,58,237,0.55)',
+  flow:     '0 0 28px rgba(5,150,105,0.55)',
+  golden:   '0 0 28px rgba(245,158,11,0.55)',
+  electric: '0 0 28px rgba(236,72,153,0.55)',
 }
 
 export function MoodSelector({
@@ -43,20 +49,22 @@ export function MoodSelector({
   onMoodChange,
   onRandomize,
   isLoading,
+  disabled,
 }: MoodSelectorProps) {
+  const isDisabled = isLoading || disabled
   return (
     <div className="flex flex-col items-center gap-6 mb-12">
       <div className="flex flex-wrap justify-center gap-3">
         {moods.map((mood) => {
           const isSelected = selectedMood === mood
-          const [from, to] = MOOD_GRADIENTS[mood] || MOOD_GRADIENTS.chill
+          const [from, to] = MOOD_GRADIENTS[mood] || MOOD_GRADIENTS.drift
           return (
             <motion.button
               key={mood}
               onClick={() => onMoodChange(mood)}
               whileHover={{ y: -3, scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
-              disabled={isLoading}
+              disabled={isDisabled}
               style={
                 isSelected
                   ? {
@@ -74,7 +82,7 @@ export function MoodSelector({
               className="px-6 py-2.5 rounded-full font-medium text-sm transition-shadow disabled:opacity-40 cursor-pointer"
             >
               <span className="mr-2">{MOOD_EMOJIS[mood]}</span>
-              {mood.charAt(0).toUpperCase() + mood.slice(1)}
+              {MOOD_LABELS[mood] ?? mood}
             </motion.button>
           )
         })}
@@ -84,7 +92,7 @@ export function MoodSelector({
         onClick={onRandomize}
         whileHover={{ rotate: 180, scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        disabled={isLoading}
+        disabled={isDisabled}
         title="Shuffle tracks"
         style={{ color: 'rgba(255,255,255,0.35)' }}
         className="transition-colors hover:!text-white disabled:opacity-40"

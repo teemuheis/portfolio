@@ -2,7 +2,7 @@
 
 import type { Track } from '@/lib/spotify'
 import { motion } from 'framer-motion'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AlbumArtwork } from './components/AlbumArtwork'
 import { BlobBackground } from './components/BlobBackground'
 import { MoodSelector } from './components/MoodSelector'
@@ -15,16 +15,16 @@ type WeatherMood = {
   tone: string
 }
 
-const MOODS = ['energetic', 'chill', 'focus', 'happy', 'melancholy', 'party']
+const MOODS = ['ignite', 'drift', 'flow', 'golden', 'electric']
+const RATE_LIMIT = 5
 const SPOTIFY_BACKEND_URL = process.env.NEXT_PUBLIC_SPOTIFY_BACKEND_URL?.replace(/\/$/, '')
 
 const MOOD_ACCENT: Record<string, string> = {
-  energetic: 'bg-gradient-to-r from-red-500 to-orange-500',
-  chill:     'bg-gradient-to-r from-violet-500 to-sky-400',
-  focus:     'bg-gradient-to-r from-emerald-500 to-teal-400',
-  happy:     'bg-gradient-to-r from-amber-400 to-orange-400',
-  melancholy:'bg-gradient-to-r from-violet-600 to-pink-500',
-  party:     'bg-gradient-to-r from-pink-500 to-purple-500',
+  ignite:   'bg-gradient-to-r from-red-500 to-orange-500',
+  drift:    'bg-gradient-to-r from-violet-500 to-sky-400',
+  flow:     'bg-gradient-to-r from-emerald-500 to-teal-400',
+  golden:   'bg-gradient-to-r from-amber-400 to-orange-400',
+  electric: 'bg-gradient-to-r from-pink-500 to-purple-500',
 }
 
 function weatherMood({ energy, valence }: WeatherModifier): WeatherMood {
@@ -44,13 +44,16 @@ function weatherMood({ energy, valence }: WeatherModifier): WeatherMood {
 }
 
 export function SpotifyMoodApp() {
-  const [mood, setMood] = useState<string>('chill')
+  const [mood, setMood] = useState<string>('drift')
   const [general, setGeneral] = useState<Track[]>([])
   const [personal, setPersonal] = useState<Track[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null)
   const [weatherMod, setWeatherMod] = useState<WeatherModifier>({ energy: 0, valence: 0 })
   const [hasWeather, setHasWeather] = useState(false)
+  const [isRateLimited, setIsRateLimited] = useState(false)
+  const fetchCountRef = useRef(0)
+  const isRateLimitedRef = useRef(false)
 
   useEffect(() => {
     if (!navigator.geolocation) return
@@ -65,6 +68,7 @@ export function SpotifyMoodApp() {
   }, [])
 
   const fetchTracks = useCallback(async () => {
+    if (isRateLimitedRef.current) return
     setIsLoading(true)
     try {
       const searchParams = new URLSearchParams({
@@ -87,16 +91,20 @@ export function SpotifyMoodApp() {
       console.error('Recommendations fetch error:', error)
     } finally {
       setIsLoading(false)
+      fetchCountRef.current += 1
+      if (fetchCountRef.current >= RATE_LIMIT) {
+        isRateLimitedRef.current = true
+        setIsRateLimited(true)
+      }
     }
   }, [mood, weatherMod])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTracks()
   }, [mood, fetchTracks])
 
   const featuredTrack = general[0] ?? personal[0] ?? null
-  const accentColor = MOOD_ACCENT[mood] || MOOD_ACCENT.chill
+  const accentColor = MOOD_ACCENT[mood] || MOOD_ACCENT.drift
 
   return (
     <div className="min-h-screen relative">
@@ -133,7 +141,17 @@ export function SpotifyMoodApp() {
             onMoodChange={setMood}
             onRandomize={fetchTracks}
             isLoading={isLoading}
+            disabled={isRateLimited}
           />
+
+          {isRateLimited && (
+            <p
+              className="text-center text-xs tracking-[0.2em] uppercase -mt-6 mb-8"
+              style={{ color: 'rgba(255,255,255,0.22)' }}
+            >
+              That&apos;s your lot — refresh to explore more.
+            </p>
+          )}
 
           <div className="mb-12">
             <AlbumArtwork track={featuredTrack} mood={mood} />

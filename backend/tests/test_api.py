@@ -36,10 +36,10 @@ def test_recommendations_returns_expected_shape():
     main_module.spotify_client = SuccessfulSpotifyClient()
     client = TestClient(app)
 
-    response = client.get("/api/mood/recommendations?mood=chill")
+    response = client.get("/api/mood/recommendations?mood=drift")
 
     assert response.status_code == 200
-    assert response.json() == {"mood": "chill", "general": [], "personal": []}
+    assert response.json() == {"mood": "drift", "general": [], "personal": []}
 
 
 def test_invalid_mood_returns_400():
@@ -54,7 +54,7 @@ def test_spotify_failure_returns_sanitized_502():
     main_module.spotify_client = FailingSpotifyClient()
     client = TestClient(app)
 
-    response = client.get("/api/mood/recommendations?mood=chill")
+    response = client.get("/api/mood/recommendations?mood=drift")
 
     assert response.status_code == 502
     assert response.json() == {"error": "Spotify API request failed"}

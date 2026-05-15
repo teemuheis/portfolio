@@ -17,6 +17,7 @@ from app.moods import search_queries_for_mood
 SPOTIFY_API_BASE = "https://api.spotify.com/v1"
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/api/token"
 REDIS_KEY = "spotify:refresh_token"
+_CACHE_TTL = 300  # seconds — cache per-mood results to reduce Spotify API calls
 
 logger = logging.getLogger("spotify_mood.spotify")
 
@@ -89,21 +90,37 @@ class SpotifyClient:
     _app_cache: AccessTokenCache = field(default_factory=AccessTokenCache)
     _user_cache: AccessTokenCache = field(default_factory=AccessTokenCache)
     _token_store: TokenStore = field(default_factory=TokenStore)
+    _mood_cache: dict[str, tuple[float, RecommendationsResponse]] = field(default_factory=dict)
 
     async def recommendations_for_mood(self, mood: str) -> RecommendationsResponse:
+        cached = self._mood_cache.get(mood)
+        if cached and time.time() < cached[0] + _CACHE_TTL:
+            logger.info("mood=%s cache_hit", mood)
+            return cached[1]
+        result = await self._fetch_mood_recommendations(mood)
+        self._mood_cache[mood] = (time.time(), result)
+        return result
+
+    async def _fetch_mood_recommendations(self, mood: str) -> RecommendationsResponse:
         queries = search_queries_for_mood(mood)
         query_one, query_two = random.sample(queries, 2)
         logger.info("mood=%s queries=%r", mood, [query_one, query_two])
 
-        top_tracks, search_one, search_two = await self._gather_tracks(query_one, query_two)
+        top_tracks, liked_songs, search_one, search_two = await self._gather_tracks(query_one, query_two)
 
-        personal = random.sample(top_tracks, min(8, len(top_tracks)))
+        # Blend top tracks + liked songs, dedupe by id, filter unplayable
+        personal_pool = {track.id: track for track in top_tracks + liked_songs}
+        personal_candidates = [t for t in personal_pool.values() if t.preview_url]
+        personal = random.sample(personal_candidates, min(8, len(personal_candidates)))
         seen = {track.id for track in personal}
 
+        # General: filter preview_url, dedupe against personal
         general_candidates = search_one + search_two
         random.shuffle(general_candidates)
         general: list[Track] = []
         for track in general_candidates:
+            if not track.preview_url:
+                continue
             if track.id in seen:
                 continue
             seen.add(track.id)
@@ -114,7 +131,9 @@ class SpotifyClient:
         logger.info("mood=%s general=%s personal=%s", mood, len(general), len(personal))
         return RecommendationsResponse(mood=mood, general=general, personal=personal)
 
-    async def _gather_tracks(self, query_one: str, query_two: str) -> tuple[list[Track], list[Track], list[Track]]:
+    async def _gather_tracks(
+        self, query_one: str, query_two: str
+    ) -> tuple[list[Track], list[Track], list[Track], list[Track]]:
         return await self._with_client(
             lambda client: self._fetch_recommendation_sources(client, query_one, query_two)
         )
@@ -124,7 +143,7 @@ class SpotifyClient:
         client: httpx.AsyncClient,
         query_one: str,
         query_two: str,
-    ) -> tuple[list[Track], list[Track], list[Track]]:
+    ) -> tuple[list[Track], list[Track], list[Track], list[Track]]:
         search_one_response, search_two_response = await self._request_many(
             client,
             [
@@ -143,23 +162,39 @@ class SpotifyClient:
         ]
 
         top_tracks: list[Track] = []
+        liked_songs: list[Track] = []
         try:
             user_token = await self._user_access_token(client)
-            resp = await client.get(
-                f"{SPOTIFY_API_BASE}/me/top/tracks",
-                params={"limit": "50", "time_range": "medium_term"},
-                headers={"Authorization": f"Bearer {user_token}"},
+            top_resp, liked_resp = await asyncio.gather(
+                client.get(
+                    f"{SPOTIFY_API_BASE}/me/top/tracks",
+                    params={"limit": "50", "time_range": "medium_term"},
+                    headers={"Authorization": f"Bearer {user_token}"},
+                ),
+                client.get(
+                    f"{SPOTIFY_API_BASE}/me/tracks",
+                    params={"limit": "50"},
+                    headers={"Authorization": f"Bearer {user_token}"},
+                ),
             )
-            if resp.status_code == 200:
-                top_tracks = [sanitize_track(t) for t in resp.json().get("items", [])]
+            if top_resp.status_code == 200:
+                top_tracks = [sanitize_track(t) for t in top_resp.json().get("items", [])]
             else:
-                logger.warning("top_tracks_failed status=%s", resp.status_code)
+                logger.warning("top_tracks_failed status=%s", top_resp.status_code)
+            if liked_resp.status_code == 200:
+                liked_songs = [
+                    sanitize_track(item["track"])
+                    for item in liked_resp.json().get("items", [])
+                    if item.get("track")
+                ]
+            else:
+                logger.warning("liked_songs_failed status=%s", liked_resp.status_code)
         except SpotifyServiceError as exc:
-            logger.warning("top_tracks_skipped reason=%s", exc)
+            logger.warning("user_tracks_skipped reason=%s", exc)
         except Exception:
-            logger.exception("top_tracks_fetch_failed")
+            logger.exception("user_tracks_fetch_failed")
 
-        return top_tracks, search_one, search_two
+        return top_tracks, liked_songs, search_one, search_two
 
     async def _user_access_token(self, client: httpx.AsyncClient) -> str:
         if self._user_cache.valid():

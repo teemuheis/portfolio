@@ -13,12 +13,11 @@ type BlobBackgroundProps = {
 type WeatherIcon = keyof typeof WEATHER_ICONS
 
 const MOOD_PALETTES: Record<string, string[]> = {
-  energetic: ['#ff3b3b', '#ff7a00', '#ff0055', '#ffd500'],
-  chill: ['#7c3aed', '#06b6d4', '#4f46e5', '#0ea5e9'],
-  focus: ['#059669', '#0d9488', '#34d399', '#14b8a6'],
-  happy: ['#f59e0b', '#f97316', '#fbbf24', '#fb923c'],
-  melancholy: ['#6d28d9', '#be185d', '#4f46e5', '#7c3aed'],
-  party: ['#ec4899', '#8b5cf6', '#f43f5e', '#a855f7'],
+  ignite:   ['#ff3b3b', '#ff7a00', '#ff0055', '#ffd500'],
+  drift:    ['#7c3aed', '#06b6d4', '#4f46e5', '#0ea5e9'],
+  flow:     ['#059669', '#0d9488', '#34d399', '#14b8a6'],
+  golden:   ['#f59e0b', '#f97316', '#fbbf24', '#fb923c'],
+  electric: ['#ec4899', '#8b5cf6', '#f43f5e', '#a855f7'],
 }
 
 const BLOBS = [
@@ -99,7 +98,7 @@ function weatherSignature(weather?: BlobBackgroundProps['weather']) {
 }
 
 export function BlobBackground({ mood, weather }: BlobBackgroundProps) {
-  const colors = MOOD_PALETTES[mood] || MOOD_PALETTES.chill
+  const colors = MOOD_PALETTES[mood] || MOOD_PALETTES.drift
   const [, c2, , c4] = colors
   const signature = weatherSignature(weather)
 

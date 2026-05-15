@@ -1,30 +1,25 @@
 MOOD_SEARCH_QUERIES: dict[str, list[str]] = {
-    "energetic": [
+    "ignite": [
         "workout motivation energetic",
         "high energy running",
         "power metal energetic",
     ],
-    "chill": [
+    "drift": [
         "lo-fi chill study",
         "calm relaxing indie",
         "ambient chill vibes",
     ],
-    "focus": [
+    "flow": [
         "focus deep work instrumental",
         "concentration study music",
         "minimalist piano focus",
     ],
-    "happy": [
+    "golden": [
         "happy feel good pop",
         "upbeat feel good songs",
         "summer happy vibes",
     ],
-    "melancholy": [
-        "melancholy sad indie",
-        "emotional rainy day",
-        "post-rock atmospheric sad",
-    ],
-    "party": [
+    "electric": [
         "party dance hits",
         "edm club dance",
         "house party anthems",
@@ -37,7 +32,7 @@ class InvalidMoodError(ValueError):
 
 
 def normalize_mood(mood: str | None) -> str:
-    normalized = (mood or "chill").strip().lower()
+    normalized = (mood or "drift").strip().lower()
     if normalized not in MOOD_SEARCH_QUERIES:
         raise InvalidMoodError("Invalid mood")
     return normalized
