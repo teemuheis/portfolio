@@ -7,10 +7,11 @@ interface Props {
   totals: MacroTotals
 }
 
+// Earthy matcha-palette chart colors
 const COLORS = {
-  Protein: '#6366f1',
-  Carbs:   '#f59e0b',
-  Fat:     '#f43f5e',
+  Protein: '#5aae94',  // teal-green
+  Carbs:   '#c9a96e',  // warm gold
+  Fat:     '#c07a5a',  // terracotta
 }
 
 interface TooltipPayload {
@@ -23,19 +24,18 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
   if (!active || !payload?.length) return null
   const { name, value, payload: data } = payload[0]
   return (
-    <div className="rounded-xl border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm shadow-xl">
-      <span className="font-semibold text-white">{name}</span>
-      <div className="text-white/50 mt-0.5">{value.toFixed(1)} g</div>
-      <div className="text-white/30 text-xs">{data.kcal.toFixed(0)} kcal</div>
+    <div className="rounded-xl border border-[#7ab893]/20 bg-[#0f1e0e] px-3 py-2 text-sm shadow-xl">
+      <span className="font-semibold text-[#dcefd5]">{name}</span>
+      <div className="text-[#7ab893]/60 mt-0.5">{value.toFixed(1)} g</div>
+      <div className="text-[#7ab893]/35 text-xs">{data.kcal.toFixed(0)} kcal</div>
     </div>
   )
 }
 
 export function MacroChart({ totals }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
-  // Use ResizeObserver to get the real container width before rendering the chart.
-  // ResponsiveContainer measures synchronously at mount and gets 14px if the parent
-  // isn't laid out yet — ResizeObserver fires only after actual layout.
+  // ResizeObserver fires after actual layout — avoids the 14px measurement bug
+  // that occurs with ResponsiveContainer measuring synchronously at mount
   const [width, setWidth] = useState(0)
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export function MacroChart({ totals }: Props) {
 
   return (
     <div ref={containerRef}>
-      <h2 className="text-[11px] font-semibold uppercase tracking-widest text-white/30 mb-3">Macro split</h2>
+      <h2 className="text-[11px] font-semibold uppercase tracking-widest text-[#7ab893]/35 mb-3">Macro split</h2>
       {width > 0 && (
         <PieChart width={width} height={220}>
           <Pie
@@ -82,8 +82,8 @@ export function MacroChart({ totals }: Props) {
               const item = data.find((d) => d.name === value)
               const pct = item ? ((item.value / total) * 100).toFixed(0) : 0
               return (
-                <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13 }}>
-                  {value} <span style={{ color: 'rgba(255,255,255,0.3)' }}>{pct}%</span>
+                <span style={{ color: 'rgba(220,239,213,0.55)', fontSize: 13 }}>
+                  {value} <span style={{ color: 'rgba(122,184,147,0.35)' }}>{pct}%</span>
                 </span>
               )
             }}

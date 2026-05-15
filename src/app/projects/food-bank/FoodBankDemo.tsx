@@ -43,24 +43,24 @@ export default function FoodBankDemo() {
   return (
     <main className="max-w-6xl mx-auto px-4 py-8">
       {/* Disclaimer */}
-      <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 text-xs text-amber-400/80">
-        <span className="font-semibold text-amber-400">Demo</span> — uses ~65 hardcoded foods.
+      <div className="mb-6 rounded-xl border border-[#7ab893]/20 bg-[#7ab893]/[0.06] px-4 py-2.5 text-xs text-[#7ab893]/75">
+        <span className="font-semibold text-[#7ab893]">Demo</span> — uses ~65 hardcoded foods.
         Full version has 23,000+ items (Fineli + Open Food Facts) and requires local database hosting.
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6 items-start">
 
         {/* Left panel */}
-        <div className="rounded-2xl border border-white/8 bg-white/[0.03]">
-          <div className="flex border-b border-white/8">
+        <div className="rounded-2xl border border-[#7ab893]/15 bg-[#7ab893]/[0.04]">
+          <div className="flex border-b border-[#7ab893]/10">
             {(['demo', 'manual'] as InputMode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
                 className={`flex-1 py-3.5 text-sm font-medium transition-colors rounded-t-2xl ${
                   mode === m
-                    ? 'text-orange-400 border-b-2 border-orange-500 -mb-px'
-                    : 'text-white/35 hover:text-white/60'
+                    ? 'text-[#7ab893] border-b-2 border-[#7ab893] -mb-px'
+                    : 'text-[#7ab893]/30 hover:text-[#7ab893]/60'
                 }`}
               >
                 {m === 'demo' ? 'Demo recipes' : 'Edit ingredients'}
@@ -84,34 +84,34 @@ export default function FoodBankDemo() {
         {/* Right panel */}
         <div className="space-y-4">
           {error && (
-            <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+            <div className="rounded-xl border border-[#c07a5a]/20 bg-[#c07a5a]/[0.06] px-4 py-3 text-sm text-[#c07a5a]">
               {error}
             </div>
           )}
 
           {!result && !error && (
-            <div className="rounded-2xl border border-white/8 bg-white/[0.03] min-h-[440px] flex flex-col items-center justify-center text-center px-6">
-              <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-4 text-2xl">
-                🥗
+            <div className="rounded-2xl border border-[#7ab893]/15 bg-[#7ab893]/[0.04] min-h-[440px] flex flex-col items-center justify-center text-center px-6">
+              <div className="w-16 h-16 rounded-2xl bg-[#7ab893]/10 border border-[#7ab893]/20 flex items-center justify-center mb-4 text-2xl">
+                🍵
               </div>
-              <p className="text-white/60 text-sm font-medium">Your macro breakdown will appear here</p>
-              <p className="text-white/25 text-xs mt-1.5">Pick a demo recipe → Load recipe → Calculate macros</p>
+              <p className="text-[#dcefd5]/50 text-sm font-medium">Your macro breakdown will appear here</p>
+              <p className="text-[#7ab893]/25 text-xs mt-1.5">Pick a demo recipe → Load recipe → Calculate macros</p>
             </div>
           )}
 
           {result && (
             <>
-              <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-6">
+              <div className="rounded-2xl border border-[#7ab893]/15 bg-[#7ab893]/[0.04] p-6">
                 <MacroSummary
                   total={result.total}
                   perServing={result.per_serving}
                   servings={result.servings}
                 />
               </div>
-              <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-6">
+              <div className="rounded-2xl border border-[#7ab893]/15 bg-[#7ab893]/[0.04] p-6">
                 <MacroChart totals={result.total} />
               </div>
-              <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-6">
+              <div className="rounded-2xl border border-[#7ab893]/15 bg-[#7ab893]/[0.04] p-6">
                 <IngredientTable ingredients={result.ingredients} servings={result.servings} />
               </div>
             </>
