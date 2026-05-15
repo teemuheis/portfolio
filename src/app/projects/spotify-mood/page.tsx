@@ -12,7 +12,8 @@ export default async function SpotifyMoodPage() {
   const authenticated =
     !!cookieStore.get('spotify_access_token')?.value ||
     !!cookieStore.get('spotify_refresh_token')?.value ||
-    !!process.env.SPOTIFY_REFRESH_TOKEN
+    !!process.env.SPOTIFY_REFRESH_TOKEN ||
+    !!process.env.NEXT_PUBLIC_SPOTIFY_BACKEND_URL
 
   return (
     <main>

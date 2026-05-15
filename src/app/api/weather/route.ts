@@ -5,12 +5,12 @@ export const revalidate = 300 // Cache for 5 minutes
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
-  const lat = parseFloat(searchParams.get('lat') || '0')
-  const lon = parseFloat(searchParams.get('lon') || '0')
+  const lat = parseFloat(searchParams.get('lat') ?? '')
+  const lon = parseFloat(searchParams.get('lon') ?? '')
 
-  if (lat === 0 && lon === 0) {
+  if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
     return NextResponse.json(
-      { error: 'Missing lat/lon parameters' },
+      { error: 'Invalid lat/lon parameters' },
       { status: 400 }
     )
   }

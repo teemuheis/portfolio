@@ -9,8 +9,14 @@ import { MoodSelector } from './components/MoodSelector'
 import { TrackCard } from './components/TrackCard'
 
 type WeatherModifier = { energy: number; valence: number }
+type WeatherMood = {
+  icon: string
+  label: string
+  tone: string
+}
 
 const MOODS = ['energetic', 'chill', 'focus', 'happy', 'melancholy', 'party']
+const SPOTIFY_BACKEND_URL = process.env.NEXT_PUBLIC_SPOTIFY_BACKEND_URL?.replace(/\/$/, '')
 
 const MOOD_ACCENT: Record<string, string> = {
   energetic: 'bg-gradient-to-r from-red-500 to-orange-500',
@@ -19,6 +25,22 @@ const MOOD_ACCENT: Record<string, string> = {
   happy:     'bg-gradient-to-r from-amber-400 to-orange-400',
   melancholy:'bg-gradient-to-r from-violet-600 to-pink-500',
   party:     'bg-gradient-to-r from-pink-500 to-purple-500',
+}
+
+function weatherMood({ energy, valence }: WeatherModifier): WeatherMood {
+  if (energy > 0.18 && valence > 0.05) {
+    return { icon: '☀', label: 'bright lift', tone: '#fbbf24' }
+  }
+  if (energy > 0.18) {
+    return { icon: '↯', label: 'charged air', tone: '#fb923c' }
+  }
+  if (valence < -0.12) {
+    return { icon: '☔', label: 'rain weight', tone: '#38bdf8' }
+  }
+  if (valence < 0) {
+    return { icon: '☁', label: 'soft shade', tone: '#94a3b8' }
+  }
+  return { icon: '◐', label: 'neutral drift', tone: '#a7f3d0' }
 }
 
 type SpotifyMoodAppProps = { authenticated: boolean }
@@ -30,6 +52,7 @@ export function SpotifyMoodApp({ authenticated }: SpotifyMoodAppProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null)
   const [weatherMod, setWeatherMod] = useState<WeatherModifier>({ energy: 0, valence: 0 })
+  const [hasWeather, setHasWeather] = useState(false)
 
   useEffect(() => {
     if (!navigator.geolocation) return
@@ -38,6 +61,7 @@ export function SpotifyMoodApp({ authenticated }: SpotifyMoodAppProps) {
         const res = await fetch(`/api/weather?lat=${coords.latitude}&lon=${coords.longitude}`)
         const data = (await res.json()) as WeatherModifier
         setWeatherMod(data)
+        setHasWeather(true)
       } catch {}
     })
   }, [])
@@ -45,9 +69,15 @@ export function SpotifyMoodApp({ authenticated }: SpotifyMoodAppProps) {
   const fetchTracks = useCallback(async () => {
     setIsLoading(true)
     try {
-      const res = await fetch(
-        `/api/spotify/recommendations?mood=${mood}&energy_mod=${weatherMod.energy}&valence_mod=${weatherMod.valence}`
-      )
+      const searchParams = new URLSearchParams({
+        mood,
+        energy_mod: String(weatherMod.energy),
+        valence_mod: String(weatherMod.valence),
+      })
+      const endpoint = SPOTIFY_BACKEND_URL
+        ? `${SPOTIFY_BACKEND_URL}/api/mood/recommendations?${searchParams}`
+        : `/api/spotify/recommendations?${searchParams}`
+      const res = await fetch(endpoint)
       const data = (await res.json()) as {
         general?: Track[]
         personal?: Track[]
@@ -63,6 +93,7 @@ export function SpotifyMoodApp({ authenticated }: SpotifyMoodAppProps) {
   }, [mood, weatherMod])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTracks()
   }, [mood, fetchTracks])
 
@@ -104,7 +135,7 @@ export function SpotifyMoodApp({ authenticated }: SpotifyMoodAppProps) {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#080810]">
-      <BlobBackground mood={mood} />
+      <BlobBackground mood={mood} weather={weatherMod} />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 py-12">
         {/* Header + controls — centered narrow column */}
@@ -128,6 +159,8 @@ export function SpotifyMoodApp({ authenticated }: SpotifyMoodAppProps) {
               pick a vibe · let the weather decide
             </motion.p>
           </div>
+
+          <WeatherSignal weather={weatherMod} hasWeather={hasWeather} />
 
           <MoodSelector
             moods={MOODS}
@@ -204,5 +237,43 @@ export function SpotifyMoodApp({ authenticated }: SpotifyMoodAppProps) {
         )}
       </div>
     </div>
+  )
+}
+
+function WeatherSignal({
+  weather,
+  hasWeather,
+}: {
+  weather: WeatherModifier
+  hasWeather: boolean
+}) {
+  const signal = weatherMood(weather)
+  const energy = Math.round(Math.abs(weather.energy) * 100)
+  const valence = Math.round(Math.abs(weather.valence) * 100)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mx-auto mb-7 flex w-fit items-center gap-4 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs text-white/55 shadow-2xl backdrop-blur-md"
+    >
+      <span
+        className="flex h-8 w-8 items-center justify-center rounded-full text-base text-white"
+        style={{
+          background: `${signal.tone}22`,
+          boxShadow: `0 0 26px ${signal.tone}55`,
+          color: signal.tone,
+        }}
+      >
+        {hasWeather ? signal.icon : '⌖'}
+      </span>
+      <span className="font-medium uppercase tracking-[0.18em]">
+        {hasWeather ? signal.label : 'waiting for sky'}
+      </span>
+      <span className="hidden h-5 w-px bg-white/10 sm:block" />
+      <span className="hidden tabular-nums text-white/35 sm:block">
+        E {energy} · V {valence}
+      </span>
+    </motion.div>
   )
 }

@@ -3,11 +3,8 @@ import { NextResponse } from 'next/server'
 
 function generateRandomString(length: number): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~'
-  let result = ''
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return result
+  const bytes = crypto.getRandomValues(new Uint8Array(length))
+  return Array.from(bytes).map((b) => chars[b % chars.length]).join('')
 }
 
 async function generateCodeChallenge(codeVerifier: string): Promise<string> {
