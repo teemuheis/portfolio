@@ -26,7 +26,6 @@ class SpotifyServiceError(RuntimeError):
 @dataclass
 class TokenCache:
     access_token: str | None = None
-    refresh_token: str | None = None  # updated on each rotation
     expires_at: float = 0
 
     def valid(self) -> bool:
@@ -82,16 +81,14 @@ class SpotifyClient:
         query_one: str,
         query_two: str,
     ) -> tuple[list[Track], list[Track], list[Track]]:
-        top_tracks_response, search_one_response, search_two_response = await self._request_many(
+        search_one_response, search_two_response = await self._request_many(
             client,
             [
-                ("/me/top/tracks", {"limit": "50", "time_range": "medium_term"}),
                 ("/search", {"q": query_one, "type": "track", "limit": "20"}),
                 ("/search", {"q": query_two, "type": "track", "limit": "10"}),
             ],
         )
 
-        top_tracks = [sanitize_track(track) for track in top_tracks_response.get("items", [])]
         search_one = [
             sanitize_track(track)
             for track in search_one_response.get("tracks", {}).get("items", [])
@@ -100,7 +97,7 @@ class SpotifyClient:
             sanitize_track(track)
             for track in search_two_response.get("tracks", {}).get("items", [])
         ]
-        return top_tracks, search_one, search_two
+        return [], search_one, search_two
 
     async def _request_many(
         self,
@@ -143,56 +140,42 @@ class SpotifyClient:
             return self._token_cache.access_token or ""
 
         client_id = os.environ.get("SPOTIFY_CLIENT_ID")
-        # Use in-memory rotated token if available, fall back to env var
-        refresh_token = self._token_cache.refresh_token or os.environ.get("SPOTIFY_REFRESH_TOKEN")
         client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET")
-        use_client_secret = os.environ.get("SPOTIFY_USE_CLIENT_SECRET") == "true"
 
-        if not client_id or not refresh_token:
+        if not client_id or not client_secret:
             logger.warning(
-                "spotify_token missing_config client_id=%s refresh_token=%s",
+                "spotify_token missing_config client_id=%s client_secret=%s",
                 bool(client_id),
-                bool(refresh_token),
+                bool(client_secret),
             )
             raise SpotifyServiceError("Spotify credentials are not configured")
 
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        form = {
-            "grant_type": "refresh_token",
-            "refresh_token": refresh_token,
-        }
-
-        if client_secret and use_client_secret:
-            logger.info("spotify_token refresh mode=client_secret")
-            credentials = f"{client_id}:{client_secret}".encode("utf-8")
-            headers["Authorization"] = f"Basic {base64.b64encode(credentials).decode('ascii')}"
-        else:
-            logger.info("spotify_token refresh mode=pkce")
-            form["client_id"] = client_id
-
-        response = await client.post(SPOTIFY_AUTH_URL, data=form, headers=headers)
-        logger.info("spotify_token refresh_status=%s", response.status_code)
+        credentials = f"{client_id}:{client_secret}".encode("utf-8")
+        response = await client.post(
+            SPOTIFY_AUTH_URL,
+            data={"grant_type": "client_credentials"},
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": f"Basic {base64.b64encode(credentials).decode('ascii')}",
+            },
+        )
+        logger.info("spotify_token client_credentials_status=%s", response.status_code)
         if response.status_code >= 400:
             logger.warning(
-                "spotify_token_refresh_failed status=%s body=%s",
+                "spotify_token_failed status=%s body=%s",
                 response.status_code,
                 response.text[:240],
             )
-            raise SpotifyServiceError("Spotify token refresh failed")
+            raise SpotifyServiceError("Spotify token request failed")
 
         payload = response.json()
         access_token = payload.get("access_token")
         expires_in = int(payload.get("expires_in", 3600))
         if not access_token:
-            logger.warning("spotify_token refresh_missing_access_token")
-            raise SpotifyServiceError("Spotify token refresh returned no access token")
+            raise SpotifyServiceError("Spotify token response missing access_token")
 
         self._token_cache.access_token = access_token
         self._token_cache.expires_at = time.time() + expires_in
-        # Store rotated refresh token if Spotify issued a new one
-        if new_refresh := payload.get("refresh_token"):
-            logger.info("spotify_token refresh_token_rotated")
-            self._token_cache.refresh_token = new_refresh
         return access_token
 
     async def _with_client(self, operation):
