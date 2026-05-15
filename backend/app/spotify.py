@@ -108,19 +108,17 @@ class SpotifyClient:
 
         top_tracks, liked_songs, search_one, search_two = await self._gather_tracks(query_one, query_two)
 
-        # Blend top tracks + liked songs, dedupe by id, filter unplayable
+        # Blend top tracks + liked songs, dedupe by id
         personal_pool = {track.id: track for track in top_tracks + liked_songs}
-        personal_candidates = [t for t in personal_pool.values() if t.preview_url]
+        personal_candidates = list(personal_pool.values())
         personal = random.sample(personal_candidates, min(8, len(personal_candidates)))
         seen = {track.id for track in personal}
 
-        # General: filter preview_url, dedupe against personal
+        # General: dedupe against personal
         general_candidates = search_one + search_two
         random.shuffle(general_candidates)
         general: list[Track] = []
         for track in general_candidates:
-            if not track.preview_url:
-                continue
             if track.id in seen:
                 continue
             seen.add(track.id)

@@ -12,6 +12,32 @@ type TrackCardProps = {
   accentColor: string
 }
 
+// Module-level cache — survives re-renders, clears on page reload
+const itunesCache = new Map<string, string | null>()
+
+async function fetchItunesPreview(track: Track): Promise<string | null> {
+  if (itunesCache.has(track.id)) return itunesCache.get(track.id)!
+
+  const artist = track.artists[0]?.name ?? ''
+  const term = encodeURIComponent(`${artist} ${track.name}`)
+  try {
+    const res = await fetch(
+      `https://itunes.apple.com/search?term=${term}&entity=song&limit=5&media=music`
+    )
+    const data = await res.json() as { results?: Array<{ previewUrl?: string; trackName?: string }> }
+    const needle = track.name.toLowerCase().slice(0, 12)
+    const match = data.results?.find(
+      (r) => r.previewUrl && r.trackName?.toLowerCase().includes(needle)
+    )
+    const url = match?.previewUrl ?? null
+    itunesCache.set(track.id, url)
+    return url
+  } catch {
+    itunesCache.set(track.id, null)
+    return null
+  }
+}
+
 export function TrackCard({
   track,
   isPlaying,
@@ -22,17 +48,23 @@ export function TrackCard({
   const audioRef = useRef<HTMLAudioElement>(null)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
+  const [resolvedPreviewUrl, setResolvedPreviewUrl] = useState<string | null>(track.preview_url)
+  const [isFetchingPreview, setIsFetchingPreview] = useState(false)
+
+  // Reset when the track prop changes
+  useEffect(() => {
+    setResolvedPreviewUrl(track.preview_url)
+    setDuration(0)
+    setCurrentTime(0)
+  }, [track.id, track.preview_url])
 
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
 
-    if (isPlaying && track.preview_url) {
-      audio.src = track.preview_url
-      audio.play().catch(() => {
-        console.log('Preview playback blocked')
-        onPause()
-      })
+    if (isPlaying && resolvedPreviewUrl) {
+      audio.src = resolvedPreviewUrl
+      audio.play().catch(() => onPause())
     } else {
       audio.pause()
     }
@@ -50,37 +82,58 @@ export function TrackCard({
       audio.removeEventListener('loadedmetadata', updateDuration)
       audio.removeEventListener('ended', handleEnded)
     }
-  }, [isPlaying, track, onPause])
+  }, [isPlaying, resolvedPreviewUrl, onPause])
+
+  const handleToggle = async () => {
+    if (isPlaying) {
+      onPause()
+      return
+    }
+
+    let url = resolvedPreviewUrl
+    if (!url) {
+      setIsFetchingPreview(true)
+      url = await fetchItunesPreview(track)
+      setResolvedPreviewUrl(url)
+      setIsFetchingPreview(false)
+    }
+
+    if (url) onPlay()
+  }
 
   const imageUrl =
     track.album.images.find((img) => img.width >= 100)?.url ||
     track.album.images[0]?.url
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0
-  const toggle = () => (isPlaying ? onPause() : onPlay())
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -1 }}
-      onClick={track.preview_url ? toggle : undefined}
+      onClick={handleToggle}
       style={{
         background: isPlaying ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.04)',
         border: isPlaying ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.07)',
         backdropFilter: 'blur(12px)',
-        cursor: track.preview_url ? 'pointer' : 'default',
+        cursor: 'pointer',
       }}
       className="rounded-2xl p-4 flex items-center gap-4 transition-all select-none"
     >
-      {/* Play/pause indicator */}
+      {/* Play/pause/loading indicator */}
       <motion.div
         whileHover={{ scale: 1.15 }}
         whileTap={{ scale: 0.9 }}
         className="flex-shrink-0"
-        style={{ color: track.preview_url ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)' }}
+        style={{ color: 'rgba(255,255,255,0.9)' }}
       >
-        {isPlaying ? (
+        {isFetchingPreview ? (
+          <svg className="w-7 h-7 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+          </svg>
+        ) : isPlaying ? (
           <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
             <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
           </svg>
@@ -129,7 +182,7 @@ export function TrackCard({
         <p className="text-white/45 text-xs truncate mt-0.5">
           {track.artists.map((a) => a.name).join(', ')}
         </p>
-        {track.preview_url && (
+        {resolvedPreviewUrl && (
           <div className="mt-2 h-0.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
             <motion.div
               className={`h-full ${accentColor}`}
@@ -140,7 +193,7 @@ export function TrackCard({
         )}
       </div>
 
-      {/* Spotify link — stops propagation so it doesn't trigger play */}
+      {/* Spotify link */}
       <a
         href={track.external_urls.spotify}
         target="_blank"
