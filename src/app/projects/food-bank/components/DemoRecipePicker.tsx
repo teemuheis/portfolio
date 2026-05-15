@@ -3,7 +3,7 @@ import { DEMO_RECIPES } from '../lib/mockData'
 import type { ParsedIngredient } from '../lib/types'
 
 interface Props {
-  onLoaded: (ingredients: ParsedIngredient[]) => void
+  onLoaded: (ingredients: ParsedIngredient[], servings: number) => void
 }
 
 export function DemoRecipePicker({ onLoaded }: Props) {
@@ -16,13 +16,14 @@ export function DemoRecipePicker({ onLoaded }: Props) {
         name: ing.name,
         amount_g: ing.amount_g,
         original: `${ing.amount_g} g ${ing.name}`,
-      }))
+      })),
+      recipe.servings
     )
   }
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Try a demo recipe</p>
+      <p className="text-xs text-white/35 font-medium uppercase tracking-widest">Try a demo recipe</p>
 
       <div className="grid grid-cols-2 gap-2">
         {DEMO_RECIPES.map((r, i) => (
@@ -30,10 +31,10 @@ export function DemoRecipePicker({ onLoaded }: Props) {
             key={r.name}
             type="button"
             onClick={() => setSelected(i)}
-            className={`rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
+            className={`rounded-xl px-3 py-2.5 text-left text-sm transition-all ${
               selected === i
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-100'
+                ? 'bg-orange-500/15 border border-orange-500/40 text-orange-300'
+                : 'bg-white/[0.04] border border-white/8 text-white/60 hover:text-white/90 hover:bg-white/[0.07]'
             }`}
           >
             <div className="font-medium leading-tight">{r.name}</div>
@@ -41,16 +42,19 @@ export function DemoRecipePicker({ onLoaded }: Props) {
         ))}
       </div>
 
-      <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3 space-y-1">
-        <p className="text-sm font-medium text-gray-700">{recipe.name}</p>
-        <p className="text-xs text-gray-400">{recipe.description}</p>
-        <p className="text-xs text-gray-400">
-          {recipe.ingredients.length} ingredients · {recipe.servings} serving{recipe.servings !== 1 ? 's' : ''}
-        </p>
-        <ul className="pt-1 space-y-0.5">
+      <div className="rounded-xl bg-white/[0.04] border border-white/8 px-4 py-3 space-y-2">
+        <div>
+          <p className="text-sm font-semibold text-white/90">{recipe.name}</p>
+          <p className="text-xs text-white/40 mt-0.5">{recipe.description}</p>
+          <p className="text-xs text-white/30 mt-0.5">
+            {recipe.ingredients.length} ingredients · {recipe.servings} serving{recipe.servings !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <ul className="space-y-0.5 border-t border-white/5 pt-2">
           {recipe.ingredients.map((ing) => (
-            <li key={ing.name} className="text-xs text-gray-500 font-mono">
-              {ing.amount_g} g {ing.name}
+            <li key={ing.name} className="text-xs text-white/40 font-mono flex justify-between">
+              <span>{ing.name}</span>
+              <span className="text-white/25">{ing.amount_g} g</span>
             </li>
           ))}
         </ul>
@@ -59,12 +63,12 @@ export function DemoRecipePicker({ onLoaded }: Props) {
       <button
         type="button"
         onClick={handleLoad}
-        className="w-full rounded-lg bg-indigo-700 px-4 py-2.5 text-base font-semibold text-white hover:bg-indigo-800 transition-colors"
+        className="w-full rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 active:bg-orange-700 transition-colors"
       >
         Load recipe →
       </button>
 
-      <p className="text-xs text-gray-400 border-t border-gray-100 pt-3">
+      <p className="text-xs text-white/25 border-t border-white/5 pt-3">
         Recipe text parsing requires the full backend. Manual ingredient input works in all cases.
       </p>
     </div>
