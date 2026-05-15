@@ -26,6 +26,7 @@ class SpotifyServiceError(RuntimeError):
 @dataclass
 class TokenCache:
     access_token: str | None = None
+    refresh_token: str | None = None  # updated on each rotation
     expires_at: float = 0
 
     def valid(self) -> bool:
@@ -142,7 +143,8 @@ class SpotifyClient:
             return self._token_cache.access_token or ""
 
         client_id = os.environ.get("SPOTIFY_CLIENT_ID")
-        refresh_token = os.environ.get("SPOTIFY_REFRESH_TOKEN")
+        # Use in-memory rotated token if available, fall back to env var
+        refresh_token = self._token_cache.refresh_token or os.environ.get("SPOTIFY_REFRESH_TOKEN")
         client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET")
         use_client_secret = os.environ.get("SPOTIFY_USE_CLIENT_SECRET") == "true"
 
@@ -187,6 +189,10 @@ class SpotifyClient:
 
         self._token_cache.access_token = access_token
         self._token_cache.expires_at = time.time() + expires_in
+        # Store rotated refresh token if Spotify issued a new one
+        if new_refresh := payload.get("refresh_token"):
+            logger.info("spotify_token refresh_token_rotated")
+            self._token_cache.refresh_token = new_refresh
         return access_token
 
     async def _with_client(self, operation):
