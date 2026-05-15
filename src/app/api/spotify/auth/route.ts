@@ -35,7 +35,9 @@ export async function GET() {
 
   // Encode code_verifier in the state param to pass it back through Spotify's redirect
   // state format: "state_value:code_verifier_encoded"
-  const stateWithVerifier = `${state}:${Buffer.from(codeVerifier).toString('base64url')}`
+  // Use standard base64 (URL-safe encoding may cause issues with decoding)
+  const encodedVerifier = Buffer.from(codeVerifier).toString('base64')
+  const stateWithVerifier = `${state}:${encodedVerifier}`
 
   const authUrl = buildAuthUrl(stateWithVerifier, codeChallenge)
   const response = NextResponse.redirect(authUrl)

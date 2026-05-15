@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   let codeVerifier: string
   try {
-    codeVerifier = Buffer.from(encodedVerifier, 'base64url').toString('utf-8')
+    codeVerifier = Buffer.from(encodedVerifier, 'base64').toString('utf-8')
   } catch {
     return NextResponse.json(
       { error: 'Failed to decode verifier' },
