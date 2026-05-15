@@ -1,100 +1,80 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import type React from 'react'
+import { useState } from 'react'
 
 type BlobBackgroundProps = {
   mood: string
 }
 
-const BLOB_PALETTES: Record<string, { blobs: string[]; figures: string }> = {
-  energetic: {
-    blobs: ['#ff6b6b', '#ffa500'],
-    figures:
-      '<circle cx="20%" cy="30%" r="8" fill="#ff8c42" opacity="0.08"/><circle cx="70%" cy="60%" r="6" fill="#ff6b6b" opacity="0.08"/>',
-  },
-  chill: {
-    blobs: ['#a78bfa', '#87ceeb'],
-    figures:
-      '<path d="M 30% 40% Q 40% 35% 45% 45 Q 40% 50% 30% 40%" stroke="#87ceeb" stroke-width="1" fill="none" opacity="0.08"/>',
-  },
-  focus: {
-    blobs: ['#6ee7b7', '#cbd5e1'],
-    figures:
-      '<polygon points="25%,30% 35%,25% 40%,35% 30%,40%" fill="#6ee7b7" opacity="0.08"/>',
-  },
-  happy: {
-    blobs: ['#fcd34d', '#fdba74'],
-    figures:
-      '<circle cx="20%" cy="25%" r="5" fill="#fcd34d" opacity="0.08"/><circle cx="65%" cy="70%" r="7" fill="#fdba74" opacity="0.08"/><circle cx="45%" cy="50%" r="4" fill="#fcd34d" opacity="0.08"/>',
-  },
-  melancholy: {
-    blobs: ['#d8b4fe', '#5b21b6'],
-    figures:
-      '<line x1="15%" y1="20%" x2="25%" y2="30%" stroke="#d8b4fe" stroke-width="1" opacity="0.08"/><line x1="70%" y1="60%" x2="80%" y2="70%" stroke="#d8b4fe" stroke-width="1" opacity="0.08"/>',
-  },
-  party: {
-    blobs: ['#e879f9', '#ec4899'],
-    figures:
-      '<polygon points="30%,25% 38%,20% 40%,30% 32%,35%" fill="#e879f9" opacity="0.08"/>',
-  },
+const MOOD_PALETTES: Record<string, string[]> = {
+  energetic: ['#ff3b3b', '#ff7a00', '#ff0055', '#ffd500'],
+  chill:     ['#7c3aed', '#06b6d4', '#4f46e5', '#0ea5e9'],
+  focus:     ['#059669', '#0d9488', '#34d399', '#14b8a6'],
+  happy:     ['#f59e0b', '#f97316', '#fbbf24', '#fb923c'],
+  melancholy:['#6d28d9', '#be185d', '#4f46e5', '#7c3aed'],
+  party:     ['#ec4899', '#8b5cf6', '#f43f5e', '#a855f7'],
 }
 
-export function BlobBackground({ mood }: BlobBackgroundProps) {
-  const palette = BLOB_PALETTES[mood] || BLOB_PALETTES.chill
-  const [blob1Color, blob2Color] = palette.blobs
+const ANIM_CONFIGS = [
+  { x: [0, 60, -40, 20, 0],   y: [0, -50, 40, -20, 0],  scale: [1, 1.15, 0.95, 1.1, 1],    dur: 14, delay: 0   },
+  { x: [0, -70, 30, -30, 0],  y: [0, 60, -50, 30, 0],   scale: [1, 1.1, 1.2, 0.95, 1],     dur: 16, delay: 1   },
+  { x: [0, 80, -60, 40, 0],   y: [0, -60, 50, -30, 0],  scale: [0.9, 1.2, 1, 1.15, 0.9],   dur: 12, delay: 2   },
+  { x: [0, -50, 70, -20, 0],  y: [0, 70, -40, 60, 0],   scale: [1.1, 0.9, 1.15, 1, 1.1],   dur: 18, delay: 0.5 },
+  { x: [0, 40, -30, 50, 0],   y: [0, -40, 60, -20, 0],  scale: [1, 1.2, 0.85, 1.1, 1],     dur: 10, delay: 3   },
+  { x: [0, -60, 30, -40, 0],  y: [0, 30, -50, 20, 0],   scale: [0.95, 1.15, 1, 1.2, 0.95], dur: 13, delay: 1.5 },
+  { x: [0, 35, -25, 45, 0],   y: [0, -35, 55, -15, 0],  scale: [1.05, 0.9, 1.2, 1, 1.05],  dur: 9,  delay: 2.5 },
+  { x: [0, -45, 20, -35, 0],  y: [0, 45, -30, 25, 0],   scale: [0.95, 1.1, 0.9, 1.15, 0.95],dur: 11, delay: 4  },
+  { x: [0, 55, -35, 15, 0],   y: [0, -25, 45, -35, 0],  scale: [1.1, 0.95, 1.2, 0.9, 1.1], dur: 15, delay: 0.8 },
+]
 
-  const blobVariants = {
-    animate: {
-      x: [0, 50, -30, 30, 0],
-      y: [0, -40, 30, -20, 0],
-      scale: [0.95, 1.05, 1, 1.1, 0.95],
-    },
-  }
+export function BlobBackground({ mood }: BlobBackgroundProps) {
+  const colors = MOOD_PALETTES[mood] || MOOD_PALETTES.chill
+  const [c1, c2, c3, c4] = colors
+  const blobColors = [c1, c2, c3, c4, c1, c3, c2, c4, c3]
+
+  const [blobPositions] = useState(() => {
+    const r = (a: number, b: number) => Math.random() * (b - a) + a
+    return [
+      { style: { top: `${r(-30, -5)}%`,   left:   `${r(-30, -5)}%`  }, size: r(650, 820), blur: 42, opacity: 0.72 },
+      { style: { bottom: `${r(-30, -5)}%`,right:  `${r(-30, -5)}%`  }, size: r(600, 760), blur: 42, opacity: 0.72 },
+      { style: { top: `${r(20, 55)}%`,    left:   `${r(5, 40)}%`    }, size: r(450, 580), blur: 36, opacity: 0.58 },
+      { style: { top: `${r(0, 30)}%`,     right:  `${r(5, 35)}%`    }, size: r(400, 520), blur: 36, opacity: 0.54 },
+      { style: { bottom: `${r(10, 40)}%`, left:   `${r(0, 25)}%`    }, size: r(300, 400), blur: 28, opacity: 0.52 },
+      { style: { bottom: `${r(0, 20)}%`,  right:  `${r(10, 40)}%`   }, size: r(280, 380), blur: 28, opacity: 0.52 },
+      { style: { top: `${r(35, 65)}%`,    right:  `${r(15, 45)}%`   }, size: r(160, 270), blur: 22, opacity: 0.48 },
+      { style: { top: `${r(50, 80)}%`,    left:   `${r(25, 55)}%`   }, size: r(140, 240), blur: 22, opacity: 0.48 },
+      { style: { top: `${r(10, 45)}%`,    left:   `${r(30, 65)}%`   }, size: r(200, 300), blur: 26, opacity: 0.44 },
+    ]
+  })
 
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden bg-[#f8f7f5]">
-      {/* Blob 1 */}
-      <motion.div
-        className="absolute w-96 h-96 rounded-full blur-[80px]"
-        style={{ background: blob1Color, opacity: 0.15, top: '10%', left: '5%' }}
-        variants={blobVariants}
-        animate="animate"
-        transition={{ duration: 18, repeat: Infinity, repeatType: 'mirror' }}
-      />
-
-      {/* Blob 2 */}
-      <motion.div
-        className="absolute w-80 h-80 rounded-full blur-[80px]"
-        style={{ background: blob2Color, opacity: 0.12, top: '60%', right: '10%' }}
-        variants={blobVariants}
-        animate="animate"
-        transition={{ duration: 22, repeat: Infinity, repeatType: 'mirror', delay: 1 }}
-      />
-
-      {/* Blob 3 */}
-      <motion.div
-        className="absolute w-72 h-72 rounded-full blur-[80px]"
-        style={{ background: blob1Color, opacity: 0.1, bottom: '10%', left: '30%' }}
-        variants={blobVariants}
-        animate="animate"
-        transition={{ duration: 24, repeat: Infinity, repeatType: 'mirror', delay: 2 }}
-      />
-
-      {/* Blob 4 */}
-      <motion.div
-        className="absolute w-64 h-64 rounded-full blur-[80px]"
-        style={{ background: blob2Color, opacity: 0.08, top: '40%', right: '20%' }}
-        variants={blobVariants}
-        animate="animate"
-        transition={{ duration: 20, repeat: Infinity, repeatType: 'mirror', delay: 3 }}
-      />
-
-      {/* Mood figures (SVG) */}
-      <svg
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        dangerouslySetInnerHTML={{ __html: palette.figures }}
-      />
+    <div className="fixed inset-0 -z-10 overflow-hidden bg-[#080810]">
+      {blobPositions.map((blob, i) => {
+        const anim = ANIM_CONFIGS[i]
+        return (
+          <motion.div
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              background: blobColors[i],
+              width: blob.size,
+              height: blob.size,
+              filter: `blur(${blob.blur}px)`,
+              opacity: blob.opacity,
+              ...blob.style,
+            }}
+            animate={{ x: anim.x, y: anim.y, scale: anim.scale }}
+            transition={{
+              duration: anim.dur,
+              repeat: Infinity,
+              repeatType: 'mirror',
+              ease: 'easeInOut',
+              delay: anim.delay,
+            }}
+          />
+        )
+      })}
     </div>
   )
 }

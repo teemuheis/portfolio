@@ -72,7 +72,9 @@ async function refreshAccessToken(refreshToken: string): Promise<string> {
 
 async function getAccessToken(): Promise<string> {
   const cookieStore = await cookies()
-  const accessToken = cookieStore.get('spotify_access_token')?.value
+  const accessToken =
+    cookieStore.get('spotify_access_token')?.value ||
+    process.env.SPOTIFY_ACCESS_TOKEN
   const refreshToken =
     cookieStore.get('spotify_refresh_token')?.value ||
     process.env.SPOTIFY_REFRESH_TOKEN
@@ -81,7 +83,7 @@ async function getAccessToken(): Promise<string> {
     throw new Error('No Spotify tokens found')
   }
 
-  // Use cookie access token if present, otherwise refresh from env var
+  // Use cookie/env access token if present, otherwise refresh
   if (accessToken) return accessToken
 
   return refreshAccessToken(refreshToken)

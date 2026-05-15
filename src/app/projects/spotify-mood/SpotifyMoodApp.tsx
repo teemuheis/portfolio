@@ -1,67 +1,47 @@
 'use client'
 
 import type { Track } from '@/lib/spotify'
+import { motion } from 'framer-motion'
 import { useCallback, useEffect, useState } from 'react'
 import { AlbumArtwork } from './components/AlbumArtwork'
 import { BlobBackground } from './components/BlobBackground'
 import { MoodSelector } from './components/MoodSelector'
 import { TrackCard } from './components/TrackCard'
 
-type WeatherModifier = {
-  energy: number
-  valence: number
-}
+type WeatherModifier = { energy: number; valence: number }
 
 const MOODS = ['energetic', 'chill', 'focus', 'happy', 'melancholy', 'party']
 
 const MOOD_ACCENT: Record<string, string> = {
-  energetic: 'bg-gradient-to-r from-orange-400 to-red-400',
-  chill: 'bg-gradient-to-r from-blue-400 to-indigo-400',
-  focus: 'bg-gradient-to-r from-green-400 to-teal-400',
-  happy: 'bg-gradient-to-r from-yellow-400 to-amber-400',
-  melancholy: 'bg-gradient-to-r from-rose-400 to-purple-400',
-  party: 'bg-gradient-to-r from-pink-400 to-purple-400',
+  energetic: 'bg-gradient-to-r from-red-500 to-orange-500',
+  chill:     'bg-gradient-to-r from-violet-500 to-sky-400',
+  focus:     'bg-gradient-to-r from-emerald-500 to-teal-400',
+  happy:     'bg-gradient-to-r from-amber-400 to-orange-400',
+  melancholy:'bg-gradient-to-r from-violet-600 to-pink-500',
+  party:     'bg-gradient-to-r from-pink-500 to-purple-500',
 }
 
-type SpotifyMoodAppProps = {
-  authenticated: boolean
-}
+type SpotifyMoodAppProps = { authenticated: boolean }
 
 export function SpotifyMoodApp({ authenticated }: SpotifyMoodAppProps) {
   const [mood, setMood] = useState<string>('chill')
-  const [tracks, setTracks] = useState<Track[]>([])
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0)
+  const [general, setGeneral] = useState<Track[]>([])
+  const [personal, setPersonal] = useState<Track[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null)
-  const [weatherMod, setWeatherMod] = useState<WeatherModifier>({
-    energy: 0,
-    valence: 0,
-  })
+  const [weatherMod, setWeatherMod] = useState<WeatherModifier>({ energy: 0, valence: 0 })
 
-  // Get geolocation and weather
   useEffect(() => {
     if (!navigator.geolocation) return
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords
-        try {
-          const res = await fetch(
-            `/api/weather?lat=${latitude}&lon=${longitude}`
-          )
-          const data = (await res.json()) as WeatherModifier
-          setWeatherMod(data)
-        } catch (error) {
-          console.error('Weather fetch error:', error)
-        }
-      },
-      () => {
-        console.log('Geolocation denied')
-      }
-    )
+    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+      try {
+        const res = await fetch(`/api/weather?lat=${coords.latitude}&lon=${coords.longitude}`)
+        const data = (await res.json()) as WeatherModifier
+        setWeatherMod(data)
+      } catch {}
+    })
   }, [])
 
-  // Fetch recommendations
   const fetchTracks = useCallback(async () => {
     setIsLoading(true)
     try {
@@ -69,14 +49,12 @@ export function SpotifyMoodApp({ authenticated }: SpotifyMoodAppProps) {
         `/api/spotify/recommendations?mood=${mood}&energy_mod=${weatherMod.energy}&valence_mod=${weatherMod.valence}`
       )
       const data = (await res.json()) as {
-        tracks?: Track[]
-        mood: string
+        general?: Track[]
+        personal?: Track[]
         error?: string
       }
-      if (data.tracks && data.tracks.length > 0) {
-        setTracks(data.tracks)
-        setCurrentTrackIndex(0)
-      }
+      if (data.general) setGeneral(data.general)
+      if (data.personal) setPersonal(data.personal)
     } catch (error) {
       console.error('Recommendations fetch error:', error)
     } finally {
@@ -84,83 +62,144 @@ export function SpotifyMoodApp({ authenticated }: SpotifyMoodAppProps) {
     }
   }, [mood, weatherMod])
 
-  // Fetch on mood change
   useEffect(() => {
     fetchTracks()
   }, [mood, fetchTracks])
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen bg-[#f8f7f5] flex items-center justify-center px-4">
-        <div className="text-center max-w-md">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">
-            Spotify Mood Randomizer
-          </h1>
-          <p className="text-gray-600 mb-8">
-            Discover songs based on your mood, vibe, and weather
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#080810]">
+        <BlobBackground mood="chill" />
+        <div className="relative z-10 text-center max-w-md">
+          <motion.h1
+            className="text-6xl font-black text-white tracking-tight mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            Mood<br />
+            <span className="text-white/30">Randomizer</span>
+          </motion.h1>
+          <p className="text-white/40 mb-10 text-sm tracking-widest uppercase">
+            pick a vibe · let the weather decide
           </p>
-          <a
+          <motion.a
             href="/api/spotify/auth"
-            className="inline-block px-8 py-3 rounded-full bg-gradient-to-r from-green-400 to-green-500 text-white font-semibold hover:opacity-90 transition-opacity"
+            whileHover={{ scale: 1.04, y: -2 }}
+            whileTap={{ scale: 0.97 }}
+            className="inline-block px-8 py-3.5 rounded-full text-white font-semibold text-sm"
+            style={{
+              background: 'linear-gradient(135deg, #7c3aed, #0ea5e9)',
+              boxShadow: '0 0 30px rgba(124,58,237,0.4)',
+            }}
           >
             Connect Spotify
-          </a>
+          </motion.a>
         </div>
       </div>
     )
   }
 
-  const currentTrack = tracks[currentTrackIndex] || null
+  const featuredTrack = general[0] ?? personal[0] ?? null
+  const accentColor = MOOD_ACCENT[mood] || MOOD_ACCENT.chill
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden bg-[#080810]">
       <BlobBackground mood={mood} />
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            Mood Randomizer
-          </h1>
-          <p className="text-gray-600">Pick a vibe, discover your next favorite</p>
-        </div>
-
-        {/* Mood selector */}
-        <MoodSelector
-          moods={MOODS}
-          selectedMood={mood}
-          onMoodChange={setMood}
-          onRandomize={fetchTracks}
-          isLoading={isLoading}
-        />
-
-        {/* Album artwork */}
-        <div className="mb-24">
-          <AlbumArtwork track={currentTrack} mood={mood} />
-        </div>
-
-        {/* Track list */}
-        {tracks.length > 0 && (
-          <div className="space-y-3 max-w-2xl mx-auto mb-12">
-            {tracks.slice(0, 5).map((track) => (
-              <TrackCard
-                key={track.id}
-                track={track}
-                isPlaying={playingTrackId === track.id}
-                onPlay={() => setPlayingTrackId(track.id)}
-                onPause={() => setPlayingTrackId(null)}
-                accentColor={MOOD_ACCENT[mood] || MOOD_ACCENT.chill}
-              />
-            ))}
+      <div className="relative z-10 max-w-5xl mx-auto px-4 py-12">
+        {/* Header + controls — centered narrow column */}
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <motion.h1
+              className="text-6xl md:text-7xl font-black text-white tracking-tight leading-none mb-3"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              Mood<br />
+              <span className="text-white/25">Randomizer</span>
+            </motion.h1>
+            <motion.p
+              className="text-white/35 text-xs tracking-[0.25em] uppercase"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              pick a vibe · let the weather decide
+            </motion.p>
           </div>
-        )}
 
-        {isLoading && (
-          <div className="text-center py-8">
-            <div className="inline-flex items-center gap-2 text-gray-600">
-              <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" />
-              <span>Loading tracks...</span>
+          <MoodSelector
+            moods={MOODS}
+            selectedMood={mood}
+            onMoodChange={setMood}
+            onRandomize={fetchTracks}
+            isLoading={isLoading}
+          />
+
+          <div className="mb-12">
+            <AlbumArtwork track={featuredTrack} mood={mood} />
+          </div>
+
+          {isLoading && (
+            <div className="text-center py-4 text-xs tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              Finding tracks…
             </div>
+          )}
+        </div>
+
+        {/* Track lists — side by side on wide screens */}
+        {(general.length > 0 || personal.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2">
+            {general.length > 0 && (
+              <section>
+                <h2
+                  className="text-xs font-semibold uppercase tracking-[0.2em] mb-4 px-1 flex items-center gap-3"
+                  style={{ color: 'rgba(255,255,255,0.25)' }}
+                >
+                  <span className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                  For this vibe
+                  <span className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                </h2>
+                <div className="space-y-2">
+                  {general.map((track) => (
+                    <TrackCard
+                      key={track.id}
+                      track={track}
+                      isPlaying={playingTrackId === track.id}
+                      onPlay={() => setPlayingTrackId(track.id)}
+                      onPause={() => setPlayingTrackId(null)}
+                      accentColor={accentColor}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {personal.length > 0 && (
+              <section>
+                <h2
+                  className="text-xs font-semibold uppercase tracking-[0.2em] mb-4 px-1 flex items-center gap-3"
+                  style={{ color: 'rgba(255,255,255,0.25)' }}
+                >
+                  <span className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                  Teemu recommends
+                  <span className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                </h2>
+                <div className="space-y-2">
+                  {personal.map((track) => (
+                    <TrackCard
+                      key={track.id}
+                      track={track}
+                      isPlaying={playingTrackId === track.id}
+                      onPlay={() => setPlayingTrackId(track.id)}
+                      onPause={() => setPlayingTrackId(null)}
+                      accentColor={accentColor}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         )}
       </div>

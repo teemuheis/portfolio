@@ -57,40 +57,39 @@ export function TrackCard({
     track.album.images[0]?.url
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0
+  const toggle = () => (isPlaying ? onPause() : onPlay())
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/70 backdrop-blur-sm border border-gray-200 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/80 transition-colors"
+      whileHover={{ y: -1 }}
+      onClick={track.preview_url ? toggle : undefined}
+      style={{
+        background: isPlaying ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.04)',
+        border: isPlaying ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.07)',
+        backdropFilter: 'blur(12px)',
+        cursor: track.preview_url ? 'pointer' : 'default',
+      }}
+      className="rounded-2xl p-4 flex items-center gap-4 transition-all select-none"
     >
-      {/* Play/pause button */}
-      <motion.button
-        onClick={() => (isPlaying ? onPause() : onPlay())}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
+      {/* Play/pause indicator */}
+      <motion.div
+        whileHover={{ scale: 1.15 }}
+        whileTap={{ scale: 0.9 }}
         className="flex-shrink-0"
-        title={isPlaying ? 'Pause' : 'Play preview'}
-        disabled={!track.preview_url}
+        style={{ color: track.preview_url ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)' }}
       >
         {isPlaying ? (
-          <svg
-            className="w-8 h-8 text-gray-700"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
             <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
           </svg>
         ) : (
-          <svg
-            className={`w-8 h-8 ${track.preview_url ? 'text-gray-700' : 'text-gray-300'}`}
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z" />
           </svg>
         )}
-      </motion.button>
+      </motion.div>
 
       {/* Album art */}
       {imageUrl && (
@@ -98,14 +97,12 @@ export function TrackCard({
           <img
             src={imageUrl}
             alt={track.album.name}
-            className="w-12 h-12 rounded-lg object-cover"
+            className="w-11 h-11 rounded-lg object-cover"
           />
           {isPlaying && (
-            <motion.div
-              className={`absolute inset-0 rounded-lg border-2 ${accentColor}`}
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              style={{ opacity: 0.3 }}
+            <div
+              className="absolute -inset-0.5 rounded-lg pointer-events-none"
+              style={{ boxShadow: '0 0 0 1.5px rgba(255,255,255,0.4)' }}
             />
           )}
         </div>
@@ -113,16 +110,27 @@ export function TrackCard({
 
       {/* Track info */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-gray-800 text-sm truncate">
-          {track.name}
-        </h3>
-        <p className="text-gray-600 text-xs truncate">
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-white text-sm truncate">{track.name}</h3>
+          {isPlaying && (
+            <div className="flex-shrink-0 flex items-end gap-0.5 h-3.5">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="w-0.5 rounded-full bg-white/70"
+                  animate={{ height: ['40%', '100%', '60%', '90%', '40%'] }}
+                  transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.18, ease: 'easeInOut' }}
+                  style={{ minHeight: 2 }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+        <p className="text-white/45 text-xs truncate mt-0.5">
           {track.artists.map((a) => a.name).join(', ')}
         </p>
-
-        {/* Progress bar */}
         {track.preview_url && (
-          <div className="mt-2 relative h-1 bg-gray-300 rounded-full overflow-hidden">
+          <div className="mt-2 h-0.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
             <motion.div
               className={`h-full ${accentColor}`}
               style={{ width: `${progressPercent}%` }}
@@ -132,19 +140,19 @@ export function TrackCard({
         )}
       </div>
 
-      {/* Spotify link */}
+      {/* Spotify link — stops propagation so it doesn't trigger play */}
       <a
         href={track.external_urls.spotify}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex-shrink-0 text-gray-500 hover:text-green-500 transition-colors"
+        onClick={(e) => e.stopPropagation()}
+        className="flex-shrink-0 transition-colors"
+        style={{ color: 'rgba(255,255,255,0.25)' }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = '#1db954')}
+        onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.25)')}
         title="Open in Spotify"
       >
-        <svg
-          className="w-5 h-5"
-          fill="currentColor"
-          viewBox="0 0 24 24"
-        >
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
           <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15.6 10.561 19.14 12.84c.361.22.479.659.301 1.1zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
         </svg>
       </a>
