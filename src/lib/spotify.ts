@@ -181,6 +181,12 @@ export async function getCurrentUser(): Promise<{ id: string; display_name: stri
   return spotifyFetch<{ id: string; display_name: string }>('/me')
 }
 
+export async function searchTracks(query: string, limit = 20): Promise<Track[]> {
+  const params = new URLSearchParams({ q: query, type: 'track', limit: String(limit) })
+  const result = await spotifyFetch<{ tracks: { items: Track[] } }>(`/search?${params}`)
+  return result.tracks.items
+}
+
 export function buildAuthUrl(state: string, codeChallenge: string): string {
   const clientId = process.env.SPOTIFY_CLIENT_ID
   if (!clientId) throw new Error('Missing SPOTIFY_CLIENT_ID')

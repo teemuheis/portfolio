@@ -1,64 +1,57 @@
-import { getRecommendations, getTopArtists, getTopTracks } from '@/lib/spotify'
+import { getTopTracks, searchTracks } from '@/lib/spotify'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const revalidate = 0
 
-type MoodConfig = {
-  energy: number
-  valence: number
-  danceability: number
-  tempo: number
-}
+// Spotify's /recommendations endpoint is disabled for new apps (post Nov 2024).
+// Strategy: blend user's top tracks with mood-keyword search results.
 
-const MOOD_CONFIGS: Record<string, MoodConfig> = {
-  energetic: { energy: 0.88, valence: 0.7, danceability: 0.8, tempo: 138 },
-  chill: { energy: 0.28, valence: 0.5, danceability: 0.38, tempo: 88 },
-  focus: { energy: 0.5, valence: 0.38, danceability: 0.28, tempo: 108 },
-  happy: { energy: 0.72, valence: 0.88, danceability: 0.7, tempo: 124 },
-  melancholy: { energy: 0.28, valence: 0.18, danceability: 0.28, tempo: 78 },
-  party: { energy: 0.9, valence: 0.82, danceability: 0.9, tempo: 132 },
+const MOOD_SEARCH_QUERIES: Record<string, string[]> = {
+  energetic: ['workout motivation energetic', 'high energy running'],
+  chill: ['lo-fi chill study', 'calm relaxing indie'],
+  focus: ['focus deep work instrumental', 'concentration study music'],
+  happy: ['happy feel good pop', 'upbeat feel good songs'],
+  melancholy: ['melancholy sad indie', 'emotional rainy day'],
+  party: ['party dance hits', 'edm club dance'],
 }
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const mood = (searchParams.get('mood') || 'chill').toLowerCase()
-  const energyMod = parseFloat(searchParams.get('energy_mod') || '0')
-  const valenceMod = parseFloat(searchParams.get('valence_mod') || '0')
 
-  if (!MOOD_CONFIGS[mood]) {
+  if (!MOOD_SEARCH_QUERIES[mood]) {
     return NextResponse.json({ error: 'Invalid mood' }, { status: 400 })
   }
 
   try {
-    // Fetch user's top artists and tracks for seeding
-    const [topArtists, topTracks] = await Promise.all([
-      getTopArtists(2),
-      getTopTracks(3),
+    // Fetch user's top tracks + mood-based search results in parallel
+    const queries = MOOD_SEARCH_QUERIES[mood]
+    const randomQuery = queries[Math.floor(Math.random() * queries.length)]
+
+    const [topTracks, searchResults] = await Promise.all([
+      getTopTracks(20),
+      searchTracks(randomQuery, 20),
     ])
 
-    const seedArtists = topArtists.items.map((a) => a.id).slice(0, 2)
-    const seedTracks = topTracks.items.map((t) => t.id).slice(0, 3)
+    // Shuffle top tracks and take 5
+    const shuffledTop = topTracks.items
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 5)
 
-    const config = MOOD_CONFIGS[mood]
-    const targetEnergy = Math.max(0, Math.min(1, config.energy + energyMod))
-    const targetValence = Math.max(0, Math.min(1, config.valence + valenceMod))
+    // Take 5 from search results
+    const searchPicks = searchResults
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 5)
 
-    const recommendations = await getRecommendations({
-      seed_artists: seedArtists,
-      seed_tracks: seedTracks,
-      limit: 10,
-      target_energy: targetEnergy,
-      target_valence: targetValence,
-      target_danceability: config.danceability,
-      target_tempo: config.tempo,
+    // Blend: 5 personal + 5 discovery, deduplicate by id
+    const seen = new Set<string>()
+    const tracks = [...shuffledTop, ...searchPicks].filter((t) => {
+      if (seen.has(t.id)) return false
+      seen.add(t.id)
+      return true
     })
 
-    return NextResponse.json({
-      tracks: recommendations.tracks,
-      mood,
-      energy_mod: energyMod,
-      valence_mod: valenceMod,
-    })
+    return NextResponse.json({ tracks, mood })
   } catch (error) {
     console.error('Recommendations fetch failed:', error)
     return NextResponse.json(
