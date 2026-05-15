@@ -99,7 +99,7 @@ export function SpotifyMoodApp({ authenticated, userAuthenticated }: SpotifyMood
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-[#080810]">
+      <div className="min-h-screen flex items-center justify-center px-4">
         <BlobBackground mood="chill" />
         <div className="relative z-10 text-center max-w-md">
           <motion.h1
@@ -134,7 +134,7 @@ export function SpotifyMoodApp({ authenticated, userAuthenticated }: SpotifyMood
   const accentColor = MOOD_ACCENT[mood] || MOOD_ACCENT.chill
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-[#080810]">
+    <div className="min-h-screen relative">
       <BlobBackground mood={mood} weather={weatherMod} />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 py-12">
