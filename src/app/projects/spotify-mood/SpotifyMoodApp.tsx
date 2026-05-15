@@ -179,6 +179,28 @@ export function SpotifyMoodApp({ authenticated, userAuthenticated }: SpotifyMood
               Finding tracks…
             </div>
           )}
+
+          {!userAuthenticated && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="text-center mt-4 mb-2"
+            >
+              <motion.a
+                href="/api/spotify/auth"
+                whileHover={{ scale: 1.04, y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                className="inline-block px-6 py-2.5 rounded-full text-white font-semibold text-xs"
+                style={{
+                  background: 'linear-gradient(135deg, #7c3aed, #0ea5e9)',
+                  boxShadow: '0 0 24px rgba(124,58,237,0.35)',
+                }}
+              >
+                Connect Spotify for personal picks
+              </motion.a>
+            </motion.div>
+          )}
         </div>
 
         {/* Track lists — side by side on wide screens */}
@@ -231,24 +253,6 @@ export function SpotifyMoodApp({ authenticated, userAuthenticated }: SpotifyMood
                     />
                   ))}
                 </div>
-              </section>
-            ) : !userAuthenticated ? (
-              <section className="flex flex-col justify-center items-center text-center h-full min-h-[200px]">
-                <p className="text-white/30 text-sm mb-5 leading-relaxed">
-                  Connect your Spotify to mix in<br />your own top tracks
-                </p>
-                <motion.a
-                  href="/api/spotify/auth"
-                  whileHover={{ scale: 1.04, y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="inline-block px-6 py-2.5 rounded-full text-white font-semibold text-xs"
-                  style={{
-                    background: 'linear-gradient(135deg, #7c3aed, #0ea5e9)',
-                    boxShadow: '0 0 24px rgba(124,58,237,0.35)',
-                  }}
-                >
-                  Connect Spotify
-                </motion.a>
               </section>
             ) : null}
           </div>
