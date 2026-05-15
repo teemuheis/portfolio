@@ -1,5 +1,4 @@
 import { buildAuthUrl } from '@/lib/spotify'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 function generateRandomString(length: number): string {
@@ -34,24 +33,12 @@ export async function GET() {
   const codeChallenge = base64url(codeChallengeSha)
   const state = generateRandomString(16)
 
-  const authUrl = buildAuthUrl(state, codeChallenge)
+  // Encode code_verifier in the state param to pass it back through Spotify's redirect
+  // state format: "state_value:code_verifier_encoded"
+  const stateWithVerifier = `${state}:${Buffer.from(codeVerifier).toString('base64url')}`
+
+  const authUrl = buildAuthUrl(stateWithVerifier, codeChallenge)
   const response = NextResponse.redirect(authUrl)
-
-  // Set cookies on response to store verifier and state for callback route
-  // Use sameSite: 'none' because Spotify redirects back (cross-site request)
-  response.cookies.set('spotify_code_verifier', codeVerifier, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'none',
-    maxAge: 600, // 10 minutes
-  })
-
-  response.cookies.set('spotify_auth_state', state, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'none',
-    maxAge: 600, // 10 minutes
-  })
 
   return response
 }
