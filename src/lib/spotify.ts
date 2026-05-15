@@ -48,15 +48,16 @@ async function refreshAccessToken(refreshToken: string): Promise<string> {
     throw new Error('Missing Spotify credentials')
   }
 
+  // PKCE refresh does not use client_secret — only client_id in the body
   const response = await fetch(`${SPOTIFY_AUTH_BASE}/api/token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
     },
     body: new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
+      client_id: clientId,
     }).toString(),
     cache: 'no-store',
   })
@@ -72,15 +73,18 @@ async function refreshAccessToken(refreshToken: string): Promise<string> {
 async function getAccessToken(): Promise<string> {
   const cookieStore = await cookies()
   const accessToken = cookieStore.get('spotify_access_token')?.value
-  const refreshToken = cookieStore.get('spotify_refresh_token')?.value
+  const refreshToken =
+    cookieStore.get('spotify_refresh_token')?.value ||
+    process.env.SPOTIFY_REFRESH_TOKEN
 
-  if (!accessToken || !refreshToken) {
+  if (!refreshToken) {
     throw new Error('No Spotify tokens found')
   }
 
-  // TODO: check expiry from cookie, refresh if needed
-  // For now, assume token is fresh; production should check expiry
-  return accessToken
+  // Use cookie access token if present, otherwise refresh from env var
+  if (accessToken) return accessToken
+
+  return refreshAccessToken(refreshToken)
 }
 
 async function spotifyFetch<T>(

@@ -69,11 +69,14 @@ export function SpotifyMoodApp({ authenticated }: SpotifyMoodAppProps) {
         `/api/spotify/recommendations?mood=${mood}&energy_mod=${weatherMod.energy}&valence_mod=${weatherMod.valence}`
       )
       const data = (await res.json()) as {
-        tracks: Track[]
+        tracks?: Track[]
         mood: string
+        error?: string
       }
-      setTracks(data.tracks)
-      setCurrentTrackIndex(0)
+      if (data.tracks && data.tracks.length > 0) {
+        setTracks(data.tracks)
+        setCurrentTrackIndex(0)
+      }
     } catch (error) {
       console.error('Recommendations fetch error:', error)
     } finally {

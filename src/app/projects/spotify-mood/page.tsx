@@ -9,7 +9,10 @@ export const metadata: Metadata = {
 
 export default async function SpotifyMoodPage() {
   const cookieStore = await cookies()
-  const authenticated = !!cookieStore.get('spotify_access_token')?.value
+  const authenticated =
+    !!cookieStore.get('spotify_access_token')?.value ||
+    !!cookieStore.get('spotify_refresh_token')?.value ||
+    !!process.env.SPOTIFY_REFRESH_TOKEN
 
   return (
     <main>
