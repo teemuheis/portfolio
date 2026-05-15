@@ -32,14 +32,25 @@ class TokenCache:
         return bool(self.access_token) and time.time() < self.expires_at - 60
 
 
+@dataclass
+class UserTokenCache:
+    access_token: str | None = None
+    expires_at: float = 0
+
+    def valid(self) -> bool:
+        return bool(self.access_token) and time.time() < self.expires_at - 60
+
+
 class SpotifyClient:
     def __init__(
         self,
         http_client: httpx.AsyncClient | None = None,
         token_cache: TokenCache | None = None,
+        user_token_cache: UserTokenCache | None = None,
     ) -> None:
         self._http_client = http_client
         self._token_cache = token_cache or TokenCache()
+        self._user_token_cache = user_token_cache or UserTokenCache()
 
     async def recommendations_for_mood(self, mood: str) -> RecommendationsResponse:
         queries = search_queries_for_mood(mood)
@@ -97,7 +108,54 @@ class SpotifyClient:
             sanitize_track(track)
             for track in search_two_response.get("tracks", {}).get("items", [])
         ]
-        return [], search_one, search_two
+
+        top_tracks: list[Track] = []
+        user_refresh_token = os.environ.get("SPOTIFY_USER_REFRESH_TOKEN")
+        if user_refresh_token:
+            try:
+                user_token = await self._user_access_token(client)
+                resp = await client.get(
+                    f"{SPOTIFY_API_BASE}/me/top/tracks",
+                    params={"limit": "50", "time_range": "medium_term"},
+                    headers={"Authorization": f"Bearer {user_token}"},
+                )
+                if resp.status_code == 200:
+                    top_tracks = [sanitize_track(t) for t in resp.json().get("items", [])]
+                else:
+                    logger.warning("top_tracks_failed status=%s", resp.status_code)
+            except Exception:
+                logger.exception("top_tracks_fetch_failed")
+
+        return top_tracks, search_one, search_two
+
+    async def _user_access_token(self, client: httpx.AsyncClient) -> str:
+        if self._user_token_cache.valid():
+            return self._user_token_cache.access_token or ""
+
+        client_id = os.environ.get("SPOTIFY_CLIENT_ID")
+        client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET")
+        refresh_token = os.environ.get("SPOTIFY_USER_REFRESH_TOKEN")
+
+        if not client_id or not client_secret or not refresh_token:
+            raise SpotifyServiceError("User token credentials not configured")
+
+        credentials = f"{client_id}:{client_secret}".encode("utf-8")
+        response = await client.post(
+            SPOTIFY_AUTH_URL,
+            data={"grant_type": "refresh_token", "refresh_token": refresh_token},
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": f"Basic {base64.b64encode(credentials).decode('ascii')}",
+            },
+        )
+        if response.status_code >= 400:
+            logger.warning("user_token_refresh_failed status=%s body=%s", response.status_code, response.text[:240])
+            raise SpotifyServiceError("User token refresh failed")
+
+        payload = response.json()
+        self._user_token_cache.access_token = payload.get("access_token")
+        self._user_token_cache.expires_at = time.time() + int(payload.get("expires_in", 3600))
+        return self._user_token_cache.access_token or ""
 
     async def _request_many(
         self,
