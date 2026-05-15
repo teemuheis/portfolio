@@ -38,17 +38,18 @@ export async function GET() {
   const response = NextResponse.redirect(authUrl)
 
   // Set cookies on response to store verifier and state for callback route
+  // Use sameSite: 'none' because Spotify redirects back (cross-site request)
   response.cookies.set('spotify_code_verifier', codeVerifier, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: true,
+    sameSite: 'none',
     maxAge: 600, // 10 minutes
   })
 
   response.cookies.set('spotify_auth_state', state, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: true,
+    sameSite: 'none',
     maxAge: 600, // 10 minutes
   })
 
