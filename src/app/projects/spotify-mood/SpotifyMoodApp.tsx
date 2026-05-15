@@ -43,9 +43,7 @@ function weatherMood({ energy, valence }: WeatherModifier): WeatherMood {
   return { icon: '◐', label: 'neutral drift', tone: '#a7f3d0' }
 }
 
-type SpotifyMoodAppProps = { authenticated: boolean; userAuthenticated: boolean }
-
-export function SpotifyMoodApp({ authenticated, userAuthenticated }: SpotifyMoodAppProps) {
+export function SpotifyMoodApp() {
   const [mood, setMood] = useState<string>('chill')
   const [general, setGeneral] = useState<Track[]>([])
   const [personal, setPersonal] = useState<Track[]>([])
@@ -97,39 +95,6 @@ export function SpotifyMoodApp({ authenticated, userAuthenticated }: SpotifyMood
     fetchTracks()
   }, [mood, fetchTracks])
 
-  if (!authenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <BlobBackground mood="chill" />
-        <div className="relative z-10 text-center max-w-md">
-          <motion.h1
-            className="text-6xl font-black text-white tracking-tight mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Mood<br />
-            <span className="text-white/30">Randomizer</span>
-          </motion.h1>
-          <p className="text-white/40 mb-10 text-sm tracking-widest uppercase">
-            pick a vibe · let the weather decide
-          </p>
-          <motion.a
-            href="/api/spotify/auth"
-            whileHover={{ scale: 1.04, y: -2 }}
-            whileTap={{ scale: 0.97 }}
-            className="inline-block px-8 py-3.5 rounded-full text-white font-semibold text-sm"
-            style={{
-              background: 'linear-gradient(135deg, #7c3aed, #0ea5e9)',
-              boxShadow: '0 0 30px rgba(124,58,237,0.4)',
-            }}
-          >
-            Connect Spotify
-          </motion.a>
-        </div>
-      </div>
-    )
-  }
-
   const featuredTrack = general[0] ?? personal[0] ?? null
   const accentColor = MOOD_ACCENT[mood] || MOOD_ACCENT.chill
 
@@ -180,27 +145,6 @@ export function SpotifyMoodApp({ authenticated, userAuthenticated }: SpotifyMood
             </div>
           )}
 
-          {!userAuthenticated && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="text-center mt-4 mb-2"
-            >
-              <motion.a
-                href="/api/spotify/auth"
-                whileHover={{ scale: 1.04, y: -2 }}
-                whileTap={{ scale: 0.97 }}
-                className="inline-block px-6 py-2.5 rounded-full text-white font-semibold text-xs"
-                style={{
-                  background: 'linear-gradient(135deg, #7c3aed, #0ea5e9)',
-                  boxShadow: '0 0 24px rgba(124,58,237,0.35)',
-                }}
-              >
-                Connect Spotify for personal picks
-              </motion.a>
-            </motion.div>
-          )}
         </div>
 
         {/* Track lists — side by side on wide screens */}
