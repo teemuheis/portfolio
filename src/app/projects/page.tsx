@@ -32,30 +32,6 @@ const PROJECTS: Project[] = [
     label: 'Live demo →',
     tags: ['React', 'Python', 'SQLite', 'Vector search'],
   },
-  {
-    title: 'Config Driven Request Builder',
-    desc: 'CLI parser that extracts deeply nested API request definitions and transforms them into Bruno collections — reducing manual collection setup from hours to seconds.',
-    href: 'https://github.com/teemuheis',
-    external: true,
-    label: 'GitHub →',
-    tags: ['Python', 'CLI', 'Bruno', 'API tooling'],
-  },
-  {
-    title: 'AI Food Recognition Workflow',
-    desc: 'Telegram bot using image recognition and macro estimation pipelines. Photo in → structured nutrition data out, logged to a spreadsheet.',
-    href: 'https://github.com/teemuheis',
-    external: true,
-    label: 'GitHub →',
-    tags: ['n8n', 'OpenAI', 'Telegram', 'SQLite'],
-  },
-  {
-    title: 'Portfolio Landing Page',
-    desc: 'This site — built with Next.js, Leaflet, and Framer Motion. Pulls live Strava data server-side; secrets never touch the browser.',
-    href: 'https://github.com/teemuheis/portfolio',
-    external: true,
-    label: 'GitHub →',
-    tags: ['Next.js', 'TypeScript', 'Leaflet', 'Strava API'],
-  },
 ]
 
 export default function ProjectsPage() {
