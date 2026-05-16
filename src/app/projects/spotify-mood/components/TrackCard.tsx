@@ -217,7 +217,7 @@ export function TrackCard({
         </svg>
       </a>
 
-      <audio ref={audioRef} crossOrigin="anonymous" />
+      <audio ref={audioRef} />
     </motion.div>
   )
 }
