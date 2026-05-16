@@ -10,6 +10,7 @@ type TrackCardProps = {
   onPlay: () => void
   onPause: () => void
   accentColor: string
+  volume: number
 }
 
 // Module-level cache — survives re-renders, clears on page reload
@@ -44,6 +45,7 @@ export function TrackCard({
   onPlay,
   onPause,
   accentColor,
+  volume,
 }: TrackCardProps) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [duration, setDuration] = useState(0)
@@ -60,12 +62,19 @@ export function TrackCard({
     setCurrentTime(0)
   }, [track.id, track.preview_url])
 
+  // Keep audio volume in sync
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume
+  }, [volume])
+
+  // Play/pause audio
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
 
     if (isPlaying && resolvedPreviewUrl) {
       audio.src = resolvedPreviewUrl
+      audio.volume = volume
       audio.play().catch(() => onPause())
     } else {
       audio.pause()
@@ -84,7 +93,22 @@ export function TrackCard({
       audio.removeEventListener('loadedmetadata', updateDuration)
       audio.removeEventListener('ended', handleEnded)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, resolvedPreviewUrl, onPause])
+
+  // When isPlaying is set externally (e.g. album artwork button) and we have no URL yet,
+  // trigger the iTunes fetch automatically
+  useEffect(() => {
+    if (!isPlaying || resolvedPreviewUrl || previewUnavailable || isFetchingPreview) return
+    setIsFetchingPreview(true)
+    fetchItunesPreview(track).then(url => {
+      setResolvedPreviewUrl(url)
+      setPreviewUnavailable(url === null)
+      setIsFetchingPreview(false)
+      if (!url) onPause()
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying])
 
   const handleToggle = async () => {
     if (isPlaying) {

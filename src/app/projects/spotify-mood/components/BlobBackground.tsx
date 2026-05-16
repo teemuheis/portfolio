@@ -7,6 +7,7 @@ type BlobBackgroundProps = {
   weather?: {
     energy: number
     valence: number
+    description?: string
   }
 }
 
@@ -79,22 +80,15 @@ const WEATHER_ICON_LAYOUT: Array<{
 const EQUALIZER_BARS = [32, 64, 42, 86, 54, 110, 48, 76, 38, 92, 58, 70]
 
 function weatherSignature(weather?: BlobBackgroundProps['weather']) {
-  const energy = weather?.energy ?? 0
-  const valence = weather?.valence ?? 0
-
-  if (energy > 0.18 && valence > 0.05) {
-    return { primary: 'sun' as WeatherIcon, secondary: 'bolt' as WeatherIcon, color: '#fbbf24' }
+  switch (weather?.description) {
+    case 'Sunny':  return { primary: 'sun'   as WeatherIcon, secondary: 'cloud' as WeatherIcon, color: '#fbbf24' }
+    case 'Stormy': return { primary: 'bolt'  as WeatherIcon, secondary: 'rain'  as WeatherIcon, color: '#f97316' }
+    case 'Rainy':  return { primary: 'rain'  as WeatherIcon, secondary: 'cloud' as WeatherIcon, color: '#38bdf8' }
+    case 'Snowy':  return { primary: 'rain'  as WeatherIcon, secondary: 'cloud' as WeatherIcon, color: '#bae6fd' }
+    case 'Foggy':  return { primary: 'cloud' as WeatherIcon, secondary: 'sun'   as WeatherIcon, color: '#94a3b8' }
+    case 'Cloudy': return { primary: 'cloud' as WeatherIcon, secondary: 'sun'   as WeatherIcon, color: '#94a3b8' }
+    default:       return { primary: 'cloud' as WeatherIcon, secondary: 'sun'   as WeatherIcon, color: '#a7f3d0' }
   }
-  if (energy > 0.18) {
-    return { primary: 'bolt' as WeatherIcon, secondary: 'cloud' as WeatherIcon, color: '#f97316' }
-  }
-  if (valence < -0.12) {
-    return { primary: 'rain' as WeatherIcon, secondary: 'cloud' as WeatherIcon, color: '#38bdf8' }
-  }
-  if (valence < 0) {
-    return { primary: 'cloud' as WeatherIcon, secondary: 'rain' as WeatherIcon, color: '#94a3b8' }
-  }
-  return { primary: 'cloud' as WeatherIcon, secondary: 'sun' as WeatherIcon, color: '#a7f3d0' }
 }
 
 export function BlobBackground({ mood, weather }: BlobBackgroundProps) {
